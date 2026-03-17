@@ -98,12 +98,91 @@ def get_weather():
     except:
         return pd.DataFrame()
 
+
+def confidence_score(mae, current_pm25):
+    """Convert MAE into a human-readable confidence score."""
+    if current_pm25 <= 0:
+        return 72, "Moderate"
+    relative_error = (mae / max(current_pm25, 1)) * 100
+    if relative_error < 10:
+        return 95, "Very High"
+    elif relative_error < 15:
+        return 88, "High"
+    elif relative_error < 25:
+        return 76, "Moderate"
+    elif relative_error < 35:
+        return 62, "Fair"
+    else:
+        return 45, "Low"
+
+def local_impact(pm25):
+    """Translate PM2.5 into relatable Guwahati-specific local context."""
+    cigarettes = round(pm25 / 22, 1)
+    if pm25 <= 30:
+        return {
+            "cigarettes": cigarettes,
+            "summary": "Air quality is clean today.",
+            "activity": "Safe for all outdoor activities including jogging on the riverfront.",
+            "avoid": None,
+            "zones": ["All areas of Guwahati are safe today."],
+            "icon": "🟢",
+            "visibility": "Good visibility across the Brahmaputra.",
+        }
+    elif pm25 <= 60:
+        return {
+            "cigarettes": cigarettes,
+            "summary": "Mild pollution — acceptable for most people.",
+            "activity": "Morning walks near Uzan Bazar and Fancy Bazar are fine.",
+            "avoid": "Sensitive individuals should avoid prolonged exercise near G.S. Road.",
+            "zones": ["G.S. Road (traffic)", "Paltan Bazar (congestion)"],
+            "icon": "🟡",
+            "visibility": "Slight haze possible over Dispur hills.",
+        }
+    elif pm25 <= 90:
+        return {
+            "cigarettes": cigarettes,
+            "summary": "Moderate pollution — sensitive groups at risk.",
+            "activity": "Limit outdoor exercise to early morning (5-7am) near Dighalipukhuri.",
+            "avoid": "Avoid G.S. Road, Six Mile, and Ganeshguri during peak hours.",
+            "zones": ["G.S. Road", "Six Mile junction", "Ganeshguri", "Paltan Bazar"],
+            "icon": "🟠",
+            "visibility": "Noticeable haze over the city.",
+        }
+    elif pm25 <= 120:
+        return {
+            "cigarettes": cigarettes,
+            "summary": "Poor air quality — everyone should take precautions.",
+            "activity": "Avoid all outdoor exercise. Keep windows closed.",
+            "avoid": "Stay away from NH-27, Beltola, and industrial areas near AIDC.",
+            "zones": ["NH-27 corridor", "Beltola", "AIDC industrial area", "Narengi"],
+            "icon": "🔴",
+            "visibility": "Heavy haze — Nongkhyllem hills not visible.",
+        }
+    else:
+        return {
+            "cigarettes": cigarettes,
+            "summary": "Hazardous — health emergency conditions.",
+            "activity": "Stay indoors with windows sealed. Use air purifier if available.",
+            "avoid": "Do not go outside without N95 mask. Cancel all outdoor events.",
+            "zones": ["Entire city is affected", "Especially: Khanapara, Basistha, Jalukbari"],
+            "icon": "⛔",
+            "visibility": "Severe smog — visibility below 1km in parts of the city.",
+        }
+
 hist = load_data()
 current_pm25 = float(hist["pm25"].iloc[-1]) if not hist.empty else 75.0
 current_pm10 = float(hist["pm10"].iloc[-1]) if not hist.empty and "pm10" in hist.columns else None
 prev_pm25 = float(hist["pm25"].iloc[-2]) if len(hist)>1 else current_pm25
 info = aqi_info(current_pm25)
 fc = get_forecast(current_pm25)
+try:
+    with open("models/metrics.json") as _f:
+        _m = json.load(_f)
+    _mae = _m.get("mae_ug_m3", 20)
+except:
+    _mae = 20
+conf_score, conf_label = confidence_score(_mae, current_pm25)
+impact = local_impact(current_pm25)
 wx = get_weather()
 
 st.markdown(f'<div style="font-size:22px;font-weight:700;color:#e8eaf0"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:8px"></span>GUWAHATI AIR QUALITY FORECAST</div><div style="font-size:11px;color:#6b7280">BRAHMAPUTRA VALLEY - ASSAM, INDIA - BiLSTM MODEL - {datetime.now().strftime("%d %b %Y %H:%M")} IST</div>',unsafe_allow_html=True)
@@ -128,8 +207,27 @@ with g2:
         if not row.empty:
             st.metric("Temp / RH",f"{row['temperature_2m'].values[0]:.0f}C / {row['relative_humidity_2m'].values[0]:.0f}%")
             st.metric("Wind",f"{row['wind_speed_10m'].values[0]:.1f} m/s")
+
+    conf_color = "#22c55e" if conf_score>=85 else "#f5a623" if conf_score>=70 else "#ef4444"
+    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:12px 14px;margin-top:8px">
+        <div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:6px">PREDICTION CONFIDENCE</div>
+        <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:28px;font-weight:700;color:{conf_color}">{conf_score}%</div>
+            <div>
+                <div style="font-size:12px;font-weight:600;color:{conf_color}">{conf_label}</div>
+                <div style="font-size:10px;color:#6b7280">Based on recent model accuracy</div>
+            </div>
+        </div>
+        <div style="background:#1e2028;border-radius:4px;height:4px;margin-top:8px">
+            <div style="background:{conf_color};width:{conf_score}%;height:4px;border-radius:4px"></div>
+        </div>
+    </div>''', unsafe_allow_html=True)
+
     adv_bg = {"Good":"#0d2218","Satisfactory":"#0d2218","Moderate":"#1f1a08","Poor":"#1f1008","Very Poor":"#1f1008","Severe":"#1f0808"}.get(info["category"],"#1f1a08")
-    st.markdown(f'<div style="background:{adv_bg};border-left:3px solid {info["color"]};padding:10px 14px;border-radius:0 8px 8px 0;margin-top:8px"><div style="font-size:10px;font-weight:700;color:{info["color"]}">{info["category"].upper()} - HEALTH ADVICE</div><div style="font-size:12px;color:#9ca3af;margin-top:3px">{health_advice(info["category"])}</div></div>',unsafe_allow_html=True)
+    st.markdown(f'''<div style="background:{adv_bg};border-left:3px solid {info["color"]};padding:10px 14px;border-radius:0 8px 8px 0;margin-top:8px">
+        <div style="font-size:10px;font-weight:700;color:{info["color"]}">{info["category"].upper()} - HEALTH ADVICE</div>
+        <div style="font-size:12px;color:#9ca3af;margin-top:3px">{health_advice(info["category"])}</div>
+    </div>''', unsafe_allow_html=True)
 
 with g3:
     st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:6px">6-HOUR PM2.5 FORECAST</div>',unsafe_allow_html=True)
@@ -145,7 +243,7 @@ with g3:
             st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:9px;color:#6b7280">+{row["hours_ahead"]}h</div><div style="font-size:16px;font-weight:700;color:{row["color"]};margin:3px 0">{row["pm25_ugm3"]}</div><div style="font-size:8px;color:{row["color"]}">{row["category"][:4].upper()}</div></div>',unsafe_allow_html=True)
 
 st.markdown('<hr style="border-color:#1e2028;margin:16px 0">',unsafe_allow_html=True)
-t1,t2,t3 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","📋 MODEL METRICS"])
+t1,t2,t3,t4 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","🏙 LOCAL IMPACT","🔬 DATA TRANSPARENCY"])
 
 with t1:
     if not hist.empty:
@@ -182,23 +280,96 @@ with t2:
         st.info("No historical data available.")
 
 with t3:
+    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;margin-bottom:12px">
+        <div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:12px">LOCAL AIR QUALITY IMPACT - GUWAHATI</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+            <div style="font-size:40px">{impact["icon"]}</div>
+            <div>
+                <div style="font-size:16px;font-weight:600;color:#e8eaf0">{impact["summary"]}</div>
+                <div style="font-size:12px;color:#6b7280;margin-top:4px">{impact["visibility"]}</div>
+            </div>
+        </div>
+        <div style="background:#1a1d24;border-radius:8px;padding:14px;margin-bottom:10px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:6px">CIGARETTE EQUIVALENT</div>
+            <div style="font-size:24px;font-weight:700;color:#f5a623">{impact["cigarettes"]} cigarettes</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today's air for 24 hours</div>
+        </div>
+    </div>''', unsafe_allow_html=True)
+
+    ia1, ia2 = st.columns(2)
+    with ia1:
+        st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:8px">RECOMMENDED ACTIVITY</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:12px;font-size:13px;color:#c8cdd6;line-height:1.6">{impact["activity"]}</div>', unsafe_allow_html=True)
+        if impact.get("avoid"):
+            st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin:10px 0 8px">AREAS TO AVOID</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:12px;font-size:13px;color:#c8cdd6">{impact["avoid"]}</div>', unsafe_allow_html=True)
+    with ia2:
+        st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:8px">AFFECTED ZONES IN GUWAHATI</div>', unsafe_allow_html=True)
+        for zone in impact["zones"]:
+            st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:#c8cdd6">📍 {zone}</div>', unsafe_allow_html=True)
+
+        st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin:10px 0 8px">SENSITIVE GROUPS ALERT</div>', unsafe_allow_html=True)
+        groups = []
+        if current_pm25 > 30:
+            groups.append("👶 Children under 12")
+            groups.append("👴 Elderly (60+)")
+        if current_pm25 > 60:
+            groups.append("🫁 Asthma / respiratory conditions")
+            groups.append("❤️ Heart disease patients")
+        if current_pm25 > 90:
+            groups.append("🤰 Pregnant women")
+            groups.append("🏃 Athletes / outdoor workers")
+        if not groups:
+            groups = ["✅ All groups safe today"]
+        for g in groups:
+            st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:6px;padding:7px 12px;margin-bottom:5px;font-size:12px;color:#c8cdd6">{g}</div>', unsafe_allow_html=True)
+
+with t4:
+    st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:12px">DATA TRANSPARENCY - HOW THIS FORECAST WORKS</div>', unsafe_allow_html=True)
     m1,m2 = st.columns(2)
     with m1:
-        st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:10px">MODEL PERFORMANCE</div>',unsafe_allow_html=True)
+        st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:10px">MODEL ACCURACY METRICS</div>',unsafe_allow_html=True)
         try:
             with open("models/metrics.json") as f:
                 m = json.load(f)
-            st.metric("MAE",f"{m['mae_ug_m3']} ug/m3","Mean Absolute Error")
-            st.metric("RMSE",f"{m['rmse_ug_m3']} ug/m3","Root Mean Square Error")
-            st.metric("MAPE",f"{m['mape_pct']}%","Mean Absolute % Error")
+            mae = m["mae_ug_m3"]
+            rmse = m["rmse_ug_m3"]
+            mape = m["mape_pct"]
+            st.metric("MAE",f"{mae} ug/m3","Mean Absolute Error — avg prediction error")
+            st.metric("RMSE",f"{rmse} ug/m3","Root Mean Square Error — penalises large errors")
+            st.metric("MAPE",f"{mape}%","Mean Absolute % Error")
             st.metric("Training Samples",f"{m['n_train']:,}")
             st.metric("Last Trained",m.get("trained_at","")[:10])
+            st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:12px;margin-top:10px">
+                <div style="font-size:10px;color:#6b7280;margin-bottom:6px">WHAT THIS MEANS FOR YOU</div>
+                <div style="font-size:12px;color:#c8cdd6;line-height:1.6">
+                    When the model predicts PM2.5 = 100, the real value is typically between
+                    <span style="color:#f5a623;font-weight:600">{round(100-mae,0):.0f} and {round(100+mae,0):.0f} ug/m3</span>.
+                    This is why we show a confidence score instead of claiming exact predictions.
+                </div>
+            </div>''', unsafe_allow_html=True)
         except:
             st.info("Train the model first: python model.py")
     with m2:
-        st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:10px">MODEL ARCHITECTURE</div>',unsafe_allow_html=True)
-        for k,v in [("Model","Bidirectional LSTM + Attention"),("Features","39 engineered features"),("Sequence","24 hours of history"),("Horizon","6 hours ahead"),("Data","OpenAQ CPCB + Open-Meteo"),("Stations","Railway Colony + Pan Bazaar"),("AQI Standard","India CPCB"),("Refresh","Every 30 minutes")]:
-            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:7px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280">{k}</span><span style="color:#e8eaf0">{v}</span></div>',unsafe_allow_html=True)
+        st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:10px">DATA SOURCES & PIPELINE</div>',unsafe_allow_html=True)
+        for k,v in [
+            ("Primary sensor","Railway Colony CAAQMS, Guwahati"),
+            ("Secondary sensor","Pan Bazaar CAAQMS, Guwahati"),
+            ("Weather data","Open-Meteo (free, hourly)"),
+            ("AQI standard","India CPCB (Central Pollution Control Board)"),
+            ("Model type","Bidirectional LSTM + Self-Attention"),
+            ("Input features","39 engineered features"),
+            ("History window","48 hours of sensor readings"),
+            ("Forecast horizon","6 hours ahead"),
+            ("Data refresh","Every 30 minutes"),
+            ("Model retrain","Manual (automated retraining coming soon)"),
+        ]:
+            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:7px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:55%">{v}</span></div>', unsafe_allow_html=True)
+        st.markdown('''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:12px;margin-top:10px;font-size:11px;color:#6b7280;line-height:1.6">
+            <strong style="color:#c8cdd6">Disclaimer:</strong> This dashboard is for informational purposes only.
+            For official air quality data, refer to the Central Pollution Control Board (CPCB)
+            or Assam Pollution Control Board (APCB). Do not use this for medical decisions.
+        </div>''', unsafe_allow_html=True)
 
 st.markdown('<hr style="border-color:#1e2028;margin:20px 0 10px">',unsafe_allow_html=True)
 st.markdown('<div style="font-size:9px;color:#374151">GUWAHATI AQI FORECAST - BiLSTM MODEL - DATA: CPCB + OPEN-METEO - FOR INFORMATIONAL PURPOSES ONLY</div>',unsafe_allow_html=True)
