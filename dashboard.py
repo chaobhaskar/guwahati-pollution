@@ -44,7 +44,11 @@ def load_data():
 def fetch_live_data():
     try:
         import os
-        key = os.environ.get("OPENAQ_API_KEY","")
+        try:
+            import streamlit as st
+            key = st.secrets.get("OPENAQ_API_KEY", os.environ.get("OPENAQ_API_KEY",""))
+        except:
+            key = os.environ.get("OPENAQ_API_KEY","")
         headers = {"X-API-Key": key}
         rows = []
         for sensor_id, param in [(12235761,"pm25"),(12235760,"pm10")]:
