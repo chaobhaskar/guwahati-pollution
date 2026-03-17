@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="Guwahati AQI",
     page_icon="🌫",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 st.markdown("""<style>
@@ -242,10 +242,13 @@ if st.session_state.page == "home":
         </div>
         """, unsafe_allow_html=True)
     with col_menu:
-        st.markdown("<div style='padding-top:14px'>", unsafe_allow_html=True)
-        if st.button("☰  Menu", key="open_menu"):
-            st.sidebar.write("")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="padding-top:14px;text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b7280">
+                ← Open sidebar<br>for menu
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
