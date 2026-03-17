@@ -579,11 +579,22 @@ with t6:
         """, unsafe_allow_html=True)
 
         # Instagram
-        st.markdown('<a href="https://instagram.com/chao_bhaskar_pratim_gogoi" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#c13584;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">IG</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">INSTAGRAM</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">@chao_bhaskar_pratim_gogoi</div></div></a>', unsafe_allow_html=True)
-        # Email
-        st.markdown('<a href="mailto:bhaskarpratimgogoi2@gmail.com" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#1a3a5c;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">@</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">EMAIL</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">bhaskarpratimgogoi2@gmail.com</div></div></a>', unsafe_allow_html=True)
-        # GitHub
-        st.markdown('<a href="https://github.com/chaobhaskar" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#1a1d24;border:0.5px solid #374151;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">GH</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">GITHUB</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">github.com/chaobhaskar</div></div></a>', unsafe_allow_html=True)
+        st.markdown('''
+<div style="max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:10px">
+  <a href="https://instagram.com/chao_bhaskar_pratim_gogoi" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none">
+    <div style="width:38px;height:38px;border-radius:8px;background:#c13584;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0">IG</div>
+    <div><div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:2px">INSTAGRAM</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">@chao_bhaskar_pratim_gogoi</div></div>
+  </a>
+  <a href="mailto:bhaskarpratimgogoi2@gmail.com" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none">
+    <div style="width:38px;height:38px;border-radius:8px;background:#1a3a5c;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0">@</div>
+    <div><div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:2px">EMAIL</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">bhaskarpratimgogoi2@gmail.com</div></div>
+  </a>
+  <a href="https://github.com/chaobhaskar" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none">
+    <div style="width:38px;height:38px;border-radius:8px;background:#1a1d24;border:0.5px solid #374151;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0">GH</div>
+    <div><div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:2px">GITHUB</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">github.com/chaobhaskar</div></div>
+  </a>
+</div>
+''', unsafe_allow_html=True)
 
         st.markdown("""
         <div style="max-width:360px;margin:24px auto 0;background:#111318;border:0.5px solid #2a2d35;
