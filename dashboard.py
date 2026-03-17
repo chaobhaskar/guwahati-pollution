@@ -337,8 +337,6 @@ if st.session_state.page == "home":
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6b7280">+{row['hours_ahead']}h</div>
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:{row['color']};margin:3px 0">{row['pm25_ugm3']}</div>
                f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{row["color"]}">{ { "Good":"GOOD", "Satisfactory":"SATISFACTORY", "Moderate":"MODERATE", "Poor":"POOR", "Very Poor":"VERY POOR", "Severe":"SEVERE" }.get(row["category"], str(row["category"]).upper()) }</div>'
-                )
-
     # ── Section 2: Local Impact ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Local Impact</div>', unsafe_allow_html=True)
@@ -358,7 +356,7 @@ if st.session_state.page == "home":
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:700;color:#f5a623">{impact['cigarettes']} cigarettes</div>
                 <div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today's air for 24 hours</div>
             </div>
-        </div>""", unsafe_allow_html=True)
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today\'s air for 24 hours</div>
 
     with li2:
         st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%">
