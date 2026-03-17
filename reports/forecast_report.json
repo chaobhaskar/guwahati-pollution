@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-03-15T22:39:21.361239",
+  "city": "Guwahati, Assam, India",
+  "coordinates": {
+    "lat": 26.1445,
+    "lon": 91.7362
+  },
+  "forecast": [
+    {
+      "forecast_time": "2026-03-15 23:39:21.359434",
+      "hours_ahead": 1,
+      "pm25_ugm3": 54.3,
+      "aqi_india": 90,
+      "aqi_category": "Satisfactory",
+      "color": "#92d400"
+    },
+    {
+      "forecast_time": "2026-03-16 00:39:21.359434",
+      "hours_ahead": 2,
+      "pm25_ugm3": 47.2,
+      "aqi_india": 78,
+      "aqi_category": "Satisfactory",
+      "color": "#92d400"
+    },
+    {
+      "forecast_time": "2026-03-16 01:39:21.359434",
+      "hours_ahead": 3,
+      "pm25_ugm3": 65.0,
+      "aqi_india": 115,
+      "aqi_category": "Moderate",
+      "color": "#ffff00"
+    },
+    {
+      "forecast_time": "2026-03-16 02:39:21.359434",
+      "hours_ahead": 4,
+      "pm25_ugm3": 80.2,
+      "aqi_india": 167,
+      "aqi_category": "Moderate",
+      "color": "#ffff00"
+    },
+    {
+      "forecast_time": "2026-03-16 03:39:21.359434",
+      "hours_ahead": 5,
+      "pm25_ugm3": 81.8,
+      "aqi_india": 172,
+      "aqi_category": "Moderate",
+      "color": "#ffff00"
+    },
+    {
+      "forecast_time": "2026-03-16 04:39:21.359434",
+      "hours_ahead": 6,
+      "pm25_ugm3": 77.1,
+      "aqi_india": 156,
+      "aqi_category": "Moderate",
+      "color": "#ffff00"
+    }
+  ],
+  "alerts": [],
+  "model_version": "BiLSTM-Attention v1.0",
+  "data_sources": [
+    "OpenAQ",
+    "Open-Meteo",
+    "CPCB CAAQMS"
+  ]
+}

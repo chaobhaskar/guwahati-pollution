@@ -232,7 +232,7 @@ if __name__ == "__main__":
 
     # 3. Longer sequences — 48h of history instead of 24h
     X, y = make_sequences(df_feat, feature_cols, "pm25",
-                           seq_len=48, forecast_horizon=6)
+                           seq_len=24, forecast_horizon=6)
 
     # 4. Augment data — add small noise to create variation
     import numpy as np
