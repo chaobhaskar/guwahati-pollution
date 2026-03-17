@@ -80,7 +80,7 @@ with g1:
     st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:6px">AQI - INDIA CPCB</div>',unsafe_allow_html=True)
     gauge = go.Figure(go.Indicator(mode="gauge+number",value=info["aqi"],number=dict(font=dict(size=42,color="#e8eaf0")),gauge=dict(axis=dict(range=[0,500],tickfont=dict(size=9,color="#6b7280")),bar=dict(color=info["color"],thickness=0.25),bgcolor="#1a1d24",borderwidth=0,steps=[dict(range=[0,50],color="#0d2218"),dict(range=[50,100],color="#172108"),dict(range=[100,200],color="#1f1a08"),dict(range=[200,300],color="#1f1008"),dict(range=[300,500],color="#1f0808")])))
     gauge.update_layout(paper_bgcolor="#111318",height=220,margin=dict(l=20,r=20,t=20,b=10))
-    st.plotly_chart(gauge,use_container_width=True,config={"displayModeBar":False})
+    st.plotly_chart(gauge,width="stretch",config={"displayModeBar":False})
     st.markdown(f'<div style="text-align:center;font-size:14px;font-weight:700;color:{info["color"]};margin-top:-10px">{info["category"].upper()}</div>',unsafe_allow_html=True)
 
 with g2:
@@ -104,7 +104,7 @@ with g3:
     fig.add_hline(y=60,line_dash="dot",line_color="#374151",annotation_text="India 60",annotation_font_color="#6b7280",annotation_font_size=9)
     fig.add_trace(go.Scatter(x=[f"+{h}h" for h in fc["hours_ahead"]],y=fc["pm25_ugm3"],fill="tozeroy",fillcolor="rgba(245,166,35,0.06)",line=dict(color="#f5a623",width=2.5),mode="lines+markers",marker=dict(color=fc["color"].tolist(),size=10,line=dict(color="#0a0c0f",width=2)),hovertemplate="<b>%{x}</b><br>PM2.5: %{y}<extra></extra>"))
     fig.update_layout(paper_bgcolor="#111318",plot_bgcolor="#111318",font=dict(family="monospace",color="#c8cdd6",size=11),margin=dict(l=50,r=20,t=30,b=40),height=260,showlegend=False,yaxis=dict(gridcolor="#1e2028",range=[0,max(fc["pm25_ugm3"])*1.3]),xaxis=dict(gridcolor="#1e2028"))
-    st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
+    st.plotly_chart(fig,width="stretch",config={"displayModeBar":False})
     cols = st.columns(6)
     for i,(_,row) in enumerate(fc.iterrows()):
         with cols[i]:
@@ -125,7 +125,7 @@ with t1:
         if "wind_speed_10m" in df.columns:
             fig2.add_trace(go.Bar(x=df["datetime"],y=df["wind_speed_10m"],marker_color="#1e3a4a",name="Wind"),row=2,col=1)
         fig2.update_layout(paper_bgcolor="#111318",plot_bgcolor="#111318",font=dict(family="monospace",color="#c8cdd6",size=11),height=380,legend=dict(orientation="h",yanchor="bottom",y=1.02,font=dict(size=10,color="#6b7280")),margin=dict(l=50,r=20,t=30,b=40))
-        st.plotly_chart(fig2,use_container_width=True,config={"displayModeBar":False})
+        st.plotly_chart(fig2,width="stretch",config={"displayModeBar":False})
         r1,r2,r3,r4 = st.columns(4)
         r1.metric("Avg PM2.5",f"{df['pm25'].mean():.1f} ug/m3")
         r2.metric("Peak PM2.5",f"{df['pm25'].max():.1f} ug/m3")
@@ -142,7 +142,7 @@ with t2:
         pivot = df2.pivot_table(values="pm25",index="hour",columns="date",aggfunc="mean").iloc[:,-30:]
         fig3 = go.Figure(go.Heatmap(z=pivot.values,x=[str(c) for c in pivot.columns],y=[f"{h:02d}:00" for h in pivot.index],colorscale=[[0,"#0d2218"],[0.2,"#22c55e"],[0.4,"#84cc16"],[0.6,"#f5a623"],[0.8,"#ef4444"],[1,"#7f1d1d"]],hovertemplate="Date: %{x}<br>Hour: %{y}<br>PM2.5: %{z:.1f}<extra></extra>",colorbar=dict(tickfont=dict(size=9,color="#6b7280"),thickness=10)))
         fig3.update_layout(paper_bgcolor="#111318",plot_bgcolor="#111318",font=dict(family="monospace",color="#c8cdd6",size=11),height=320,yaxis=dict(autorange="reversed"),xaxis=dict(tickangle=45),margin=dict(l=50,r=20,t=30,b=40))
-        st.plotly_chart(fig3,use_container_width=True,config={"displayModeBar":False})
+        st.plotly_chart(fig3,width="stretch",config={"displayModeBar":False})
         st.markdown('<div style="font-size:10px;color:#6b7280;padding:8px 12px;background:#111318;border-radius:6px">Dark green = clean - Amber = moderate - Red = hazardous - Peaks at 7-9am and 6-9pm</div>',unsafe_allow_html=True)
     else:
         st.info("No historical data available.")
