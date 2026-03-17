@@ -5,6 +5,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import requests, os, json, glob
+try:
+    from streamlit_folium import st_folium
+    import folium
+    FOLIUM_AVAILABLE = True
+except:
+    FOLIUM_AVAILABLE = False
 
 st.set_page_config(page_title="Guwahati AQI Forecast", page_icon="🌫️", layout="wide")
 
@@ -169,6 +175,154 @@ def local_impact(pm25):
             "visibility": "Severe smog — visibility below 1km in parts of the city.",
         }
 
+
+STATIONS = [
+    {
+        "name": "Railway Colony",
+        "area": "North Guwahati",
+        "lat": 26.1817,
+        "lon": 91.7806,
+        "sensor_pm25": 12235761,
+        "sensor_pm10": 12235760,
+        "type": "CPCB CAAQMS",
+        "active": True,
+    },
+    {
+        "name": "Pan Bazaar",
+        "area": "City Centre",
+        "lat": 26.1844,
+        "lon": 91.7458,
+        "sensor_pm25": 12236490,
+        "sensor_pm10": 12236489,
+        "type": "CPCB CAAQMS",
+        "active": True,
+    },
+    {
+        "name": "IIT Guwahati",
+        "area": "North Bank",
+        "lat": 26.1924,
+        "lon": 91.6966,
+        "sensor_pm25": 3409360,
+        "sensor_pm10": None,
+        "type": "PCBA Monitor",
+        "active": True,
+    },
+    {
+        "name": "LGBI Airport",
+        "area": "Borjhar",
+        "lat": 26.1061,
+        "lon": 91.5858,
+        "sensor_pm25": 3409390,
+        "sensor_pm10": None,
+        "type": "PCBA Monitor",
+        "active": True,
+    },
+]
+
+KEY_LOCATIONS = [
+    {"name": "G.S. Road", "lat": 26.1396, "lon": 91.7943, "note": "High traffic corridor"},
+    {"name": "Paltan Bazar", "lat": 26.1847, "lon": 91.7534, "note": "Commercial hub"},
+    {"name": "Six Mile", "lat": 26.1285, "lon": 91.8156, "note": "Traffic bottleneck"},
+    {"name": "Ganeshguri", "lat": 26.1467, "lon": 91.7789, "note": "Residential area"},
+    {"name": "Dispur", "lat": 26.1342, "lon": 91.7858, "note": "Government district"},
+    {"name": "GMCH", "lat": 26.1731, "lon": 91.7441, "note": "Medical College Hospital"},
+    {"name": "Dighalipukhuri", "lat": 26.1851, "lon": 91.7558, "note": "Recreational park"},
+]
+
+@st.cache_data(ttl=1800)
+def fetch_station_readings():
+    """Fetch latest PM2.5 for all stations."""
+    try:
+        import os
+        try:
+            import streamlit as st
+            key = st.secrets.get("OPENAQ_API_KEY", os.environ.get("OPENAQ_API_KEY",""))
+        except:
+            key = os.environ.get("OPENAQ_API_KEY","")
+        headers = {"X-API-Key": key}
+        readings = {}
+        for station in STATIONS:
+            sid = station["sensor_pm25"]
+            try:
+                r = requests.get(
+                    f"https://api.openaq.org/v3/sensors/{sid}/hours",
+                    params={"limit": 1},
+                    headers=headers, timeout=10
+                )
+                if r.status_code == 200:
+                    results = r.json().get("results", [])
+                    if results:
+                        readings[station["name"]] = round(float(results[0]["value"]), 1)
+            except:
+                pass
+        return readings
+    except:
+        return {}
+
+def make_map(station_readings, current_pm25):
+    """Build interactive Folium map of Guwahati."""
+    m = folium.Map(
+        location=[26.15, 91.74],
+        zoom_start=12,
+        tiles="CartoDB dark_matter",
+    )
+
+    for station in STATIONS:
+        pm25 = station_readings.get(station["name"], current_pm25)
+        info = aqi_info(pm25)
+        color = {
+            "Good": "green",
+            "Satisfactory": "lightgreen",
+            "Moderate": "orange",
+            "Poor": "red",
+            "Very Poor": "darkred",
+            "Severe": "black",
+        }.get(info["category"], "orange")
+
+        cigs = round(pm25 / 22, 1)
+        popup_html = f"""
+        <div style="font-family:monospace;min-width:200px">
+            <div style="font-size:14px;font-weight:700;margin-bottom:6px">{station["name"]}</div>
+            <div style="font-size:11px;color:#666;margin-bottom:8px">{station["area"]} · {station["type"]}</div>
+            <div style="font-size:24px;font-weight:700;color:{info["color"]}">{pm25} µg/m³</div>
+            <div style="font-size:11px;margin:4px 0">AQI: {info["aqi"]} — {info["category"]}</div>
+            <div style="font-size:11px;color:#666">≈ {cigs} cigarettes/day</div>
+        </div>
+        """
+        folium.CircleMarker(
+            location=[station["lat"], station["lon"]],
+            radius=18,
+            color=color,
+            fill=True,
+            fill_color=color,
+            fill_opacity=0.7,
+            weight=2,
+            popup=folium.Popup(popup_html, max_width=250),
+            tooltip=f"{station['name']}: {pm25} µg/m³"
+        ).add_to(m)
+
+        folium.Marker(
+            location=[station["lat"], station["lon"]],
+            icon=folium.DivIcon(
+                html=f'<div style="font-family:monospace;font-size:10px;font-weight:700;color:white;text-align:center;margin-top:-6px">{pm25}</div>',
+                icon_size=(40, 20),
+                icon_anchor=(20, 10)
+            )
+        ).add_to(m)
+
+    for loc in KEY_LOCATIONS:
+        folium.Marker(
+            location=[loc["lat"], loc["lon"]],
+            icon=folium.DivIcon(
+                html=f'<div style="font-family:monospace;font-size:9px;color:#aaa;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;white-space:nowrap">{loc["name"]}</div>',
+                icon_size=(100, 20),
+                icon_anchor=(50, 10)
+            ),
+            tooltip=f"{loc['name']} — {loc['note']}"
+        ).add_to(m)
+
+    return m
+
 hist = load_data()
 current_pm25 = float(hist["pm25"].iloc[-1]) if not hist.empty else 75.0
 current_pm10 = float(hist["pm10"].iloc[-1]) if not hist.empty and "pm10" in hist.columns else None
@@ -243,7 +397,7 @@ with g3:
             st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:9px;color:#6b7280">+{row["hours_ahead"]}h</div><div style="font-size:16px;font-weight:700;color:{row["color"]};margin:3px 0">{row["pm25_ugm3"]}</div><div style="font-size:8px;color:{row["color"]}">{row["category"][:4].upper()}</div></div>',unsafe_allow_html=True)
 
 st.markdown('<hr style="border-color:#1e2028;margin:16px 0">',unsafe_allow_html=True)
-t1,t2,t3,t4 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","🏙 LOCAL IMPACT","🔬 DATA TRANSPARENCY"])
+t1,t2,t3,t4,t5 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","🏙 LOCAL IMPACT","🗺 STATION MAP","🔬 DATA TRANSPARENCY"])
 
 with t1:
     if not hist.empty:
@@ -324,7 +478,42 @@ with t3:
         for g in groups:
             st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:6px;padding:7px 12px;margin-bottom:5px;font-size:12px;color:#c8cdd6">{g}</div>', unsafe_allow_html=True)
 
+
 with t4:
+    st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:8px">LIVE MONITORING STATIONS — GUWAHATI</div>', unsafe_allow_html=True)
+    if FOLIUM_AVAILABLE:
+        station_readings = fetch_station_readings()
+        col_map, col_legend = st.columns([3, 1])
+        with col_map:
+            m = make_map(station_readings, current_pm25)
+            st_folium(m, width=700, height=450)
+        with col_legend:
+            st.markdown('<div style="font-size:10px;color:#6b7280;margin-bottom:10px">STATION READINGS</div>', unsafe_allow_html=True)
+            for station in STATIONS:
+                pm25 = station_readings.get(station["name"], None)
+                if pm25:
+                    info_s = aqi_info(pm25)
+                    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+                        <div style="font-size:11px;font-weight:600;color:#e8eaf0">{station["name"]}</div>
+                        <div style="font-size:10px;color:#6b7280;margin-bottom:4px">{station["area"]}</div>
+                        <div style="font-size:20px;font-weight:700;color:{info_s["color"]}">{pm25}</div>
+                        <div style="font-size:10px;color:{info_s["color"]}">{info_s["category"]}</div>
+                    </div>''', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+                        <div style="font-size:11px;font-weight:600;color:#e8eaf0">{station["name"]}</div>
+                        <div style="font-size:10px;color:#6b7280">{station["area"]}</div>
+                        <div style="font-size:11px;color:#374151;margin-top:4px">No recent data</div>
+                    </div>''', unsafe_allow_html=True)
+
+            st.markdown('''<div style="font-size:10px;color:#6b7280;padding:8px;background:#111318;border-radius:6px;margin-top:8px;line-height:1.5">
+                Click any circle on the map to see detailed readings.
+                Circle size and color reflects current PM2.5 level.
+            </div>''', unsafe_allow_html=True)
+    else:
+        st.info("Install streamlit-folium: pip install folium streamlit-folium")
+
+with t5:
     st.markdown('<div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:12px">DATA TRANSPARENCY - HOW THIS FORECAST WORKS</div>', unsafe_allow_html=True)
     m1,m2 = st.columns(2)
     with m1:
