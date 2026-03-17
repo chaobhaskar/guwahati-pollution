@@ -397,7 +397,7 @@ with g3:
             st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:9px;color:#6b7280">+{row["hours_ahead"]}h</div><div style="font-size:16px;font-weight:700;color:{row["color"]};margin:3px 0">{row["pm25_ugm3"]}</div><div style="font-size:8px;color:{row["color"]}">{row["category"][:4].upper()}</div></div>',unsafe_allow_html=True)
 
 st.markdown('<hr style="border-color:#1e2028;margin:16px 0">',unsafe_allow_html=True)
-t1,t2,t3,t4,t5 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","🏙 LOCAL IMPACT","🗺 STATION MAP","🔬 DATA TRANSPARENCY"])
+t1,t2,t3,t4,t5,t6 = st.tabs(["📈 HISTORICAL TRENDS","🌡 POLLUTION HEATMAP","🏙 LOCAL IMPACT","🗺 STATION MAP","🔬 DATA TRANSPARENCY","👤 CREATOR"])
 
 with t1:
     if not hist.empty:
@@ -559,6 +559,58 @@ with t5:
             For official air quality data, refer to the Central Pollution Control Board (CPCB)
             or Assam Pollution Control Board (APCB). Do not use this for medical decisions.
         </div>''', unsafe_allow_html=True)
+
+
+with t6:
+    cr1, cr2, cr3 = st.columns([1, 2, 1])
+    with cr2:
+        st.markdown("""
+        <div style="text-align:center;padding:30px 0 20px">
+            <img src="https://avatars.githubusercontent.com/chaobhaskar"
+                 style="width:100px;height:100px;border-radius:50%;border:3px solid #f5a623;margin-bottom:16px"
+                 onerror="this.src='https://ui-avatars.com/api/?name=Chao+Bhaskar&background=f5a623&color=0a0c0f&size=100&bold=true'"/>
+            <div style="font-size:22px;font-weight:700;color:#e8eaf0;margin-bottom:4px">Chao Bhaskar Gogoi</div>
+            <div style="font-size:13px;color:#f5a623;margin-bottom:8px;letter-spacing:.06em">CREATOR & DEVELOPER</div>
+            <div style="font-size:13px;color:#9ca3af;line-height:1.7;margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto">
+                A Physics student, currently pursuing masters in Dibrugarh University.
+                Built this dashboard to track and predict air pollution in Guwahati using deep learning.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Instagram
+        st.markdown('<a href="https://instagram.com/chao_bhaskar_pratim_gogoi" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#c13584;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">IG</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">INSTAGRAM</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">@chao_bhaskar_pratim_gogoi</div></div></a>', unsafe_allow_html=True)
+        # Email
+        st.markdown('<a href="mailto:bhaskarpratimgogoi2@gmail.com" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#1a3a5c;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">@</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">EMAIL</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">bhaskarpratimgogoi2@gmail.com</div></div></a>', unsafe_allow_html=True)
+        # GitHub
+        st.markdown('<a href="https://github.com/chaobhaskar" target="_blank" style="display:flex;align-items:center;gap:14px;background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px 18px;text-decoration:none;max-width:360px;margin:0 auto 10px"><div style="width:36px;height:36px;border-radius:8px;background:#1a1d24;border:0.5px solid #374151;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">GH</div><div><div style="font-size:11px;color:#6b7280;letter-spacing:.06em">GITHUB</div><div style="font-size:13px;color:#e8eaf0;font-weight:500">github.com/chaobhaskar</div></div></a>', unsafe_allow_html=True)
+
+        st.markdown("""
+        <div style="max-width:360px;margin:24px auto 0;background:#111318;border:0.5px solid #2a2d35;
+                    border-radius:10px;padding:16px 18px">
+            <div style="font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:10px">ABOUT THIS PROJECT</div>
+            <div style="font-size:12px;color:#9ca3af;line-height:1.7">
+                This dashboard was built entirely from scratch using Python, TensorFlow,
+                and Streamlit. The BiLSTM model is trained on real CPCB sensor data from
+                Guwahati and achieves a MAE of ~14 µg/m³ on PM2.5 prediction.
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">Python</span>
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">TensorFlow</span>
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">Streamlit</span>
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">BiLSTM</span>
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">OpenAQ</span>
+                <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;
+                             padding:4px 10px;font-size:10px;color:#f5a623">CPCB Data</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 st.markdown('<hr style="border-color:#1e2028;margin:20px 0 10px">',unsafe_allow_html=True)
 st.markdown('<div style="font-size:9px;color:#374151">GUWAHATI AQI FORECAST - BiLSTM MODEL - DATA: CPCB + OPEN-METEO - FOR INFORMATIONAL PURPOSES ONLY</div>',unsafe_allow_html=True)
