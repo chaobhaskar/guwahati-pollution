@@ -208,7 +208,7 @@ with st.sidebar:
 hist = load_data()
 current_pm25 = float(hist["pm25"].iloc[-1]) if not hist.empty else 75.0
 current_pm10 = float(hist["pm10"].iloc[-1]) if not hist.empty and "pm10" in hist.columns else None
-current_pm10 = min(current_pm10, 500) if current_pm10 else None
+current_pm10 = min(current_pm10, 300) if current_pm10 else None
 prev_pm25 = float(hist["pm25"].iloc[-2]) if len(hist)>1 else current_pm25
 info = aqi_info(current_pm25)
 fc = get_forecast(current_pm25)
@@ -336,7 +336,7 @@ if st.session_state.page == "home":
                 st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 4px;text-align:center">
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6b7280">+{row['hours_ahead']}h</div>
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:{row['color']};margin:3px 0">{row['pm25_ugm3']}</div>
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{row['color']}">{row['category'][:4].upper()}</div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{row['color']}">{row['category'][:6].upper()}</div>
                 </div>""", unsafe_allow_html=True)
 
     # ── Section 2: Local Impact ──
