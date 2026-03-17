@@ -1,0 +1,5 @@
+venv/
+data/
+models/
+*.pyc 
+.DS_Store
