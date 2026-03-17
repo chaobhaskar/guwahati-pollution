@@ -38,6 +38,36 @@ def load_data():
         df = pd.read_csv(files[0],parse_dates=["datetime"])
         df = df[df["pm25"].notna()&(df["pm25"]>0)]
         return df.sort_values("datetime").reset_index(drop=True)
+    return fetch_live_data()
+
+@st.cache_data(ttl=1800)
+def fetch_live_data():
+    try:
+        import os
+        key = os.environ.get("OPENAQ_API_KEY","")
+        headers = {"X-API-Key": key}
+        rows = []
+        for sensor_id, param in [(12235761,"pm25"),(12235760,"pm10")]:
+            r = requests.get(
+                f"https://api.openaq.org/v3/sensors/{sensor_id}/hours",
+                params={"limit":500},
+                headers=headers, timeout=15
+            )
+            if r.status_code == 200:
+                for rec in r.json().get("results",[]):
+                    rows.append({
+                        "datetime": pd.to_datetime(rec["period"]["datetimeFrom"]["utc"]).tz_localize(None),
+                        param: rec["value"]
+                    })
+        if rows:
+            df = pd.DataFrame(rows)
+            df["datetime"] = df["datetime"].dt.floor("h")
+            df = df.groupby("datetime").mean().reset_index()
+            df = df[df["pm25"].notna()&(df["pm25"]>5)]
+            print(f"[LiveAPI] Fetched {len(df)} rows")
+            return df.sort_values("datetime").reset_index(drop=True)
+    except Exception as e:
+        print(f"[LiveAPI] Failed: {e}")
     return pd.DataFrame()
 
 @st.cache_data(ttl=1800)
