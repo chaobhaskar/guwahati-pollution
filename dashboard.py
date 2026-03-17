@@ -336,8 +336,7 @@ if st.session_state.page == "home":
                 st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 4px;text-align:center">
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6b7280">+{row['hours_ahead']}h</div>
                     <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:{row['color']};margin:3px 0">{row['pm25_ugm3']}</div>
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:{row['color']}">{{"Good":"GOOD","Satisfactory":"SATISF","Moderate":"MOD","Poor":"POOR","Very Poor":"V.POOR","Severe":"SEVERE"}.get(row['category'], {"Good":"GOOD","Satisfactory":"SATISF","Moderate":"MOD","Poor":"POOR","Very Poor":"V.POOR","Severe":"SEVERE"}.get(row['category'], row['category'][:6].upper()))}</div>
-                </div>""", unsafe_allow_html=True)
+                    f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{row[\'color\']}">{ { "Good":"GOOD", "Satisfactory":"SATISFACTORY", "Moderate":"MODERATE", "Poor":"POOR", "Very Poor":"VERY POOR", "Severe":"SEVERE" }.get(row["category"], str(row["category"]).upper()) }</div>'\n                </div>""", unsafe_allow_html=True)
 
     # ── Section 2: Local Impact ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
