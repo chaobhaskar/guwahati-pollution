@@ -333,37 +333,37 @@ if st.session_state.page == "home":
         cols6 = st.columns(6)
         for i,(_,row) in enumerate(fc6.iterrows()):
             with cols6[i]:
-                st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 4px;text-align:center">
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6b7280">+{row['hours_ahead']}h</div>
-                    <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:{row['color']};margin:3px 0">{row['pm25_ugm3']}</div>
-               f'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;color:{row["color"]}">{ { "Good":"GOOD", "Satisfactory":"SATISFACTORY", "Moderate":"MODERATE", "Poor":"POOR", "Very Poor":"VERY POOR", "Severe":"SEVERE" }.get(row["category"], str(row["category"]).upper()) }</div>'
-    # ── Section 2: Local Impact ──
+                cat_short = {"Good":"GOOD","Satisfactory":"SATISF","Moderate":"MOD","Poor":"POOR","Very Poor":"V.POOR","Severe":"SEVERE"}.get(row["category"], row["category"][:5].upper())
+                st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 4px;text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#6b7280">+{row["hours_ahead"]}h</div><div style="font-family:IBM Plex Mono,monospace;font-size:15px;font-weight:700;color:{row["color"]};margin:3px 0">{row["pm25_ugm3"]}</div><div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:{row["color"]}">{cat_short}</div></div>', unsafe_allow_html=True)
+
+
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Local Impact</div>', unsafe_allow_html=True)
 
     li1,li2,li3 = st.columns([1.5,1.5,1])
     with li1:
-        st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-                <div style="font-size:32px">{impact['icon']}</div>
-                <div>
-                    <div style="font-size:15px;font-weight:600;color:#e8eaf0">{impact['summary']}</div>
-                    <div style="font-size:11px;color:#6b7280;margin-top:2px">{impact['visibility']}</div>
-                </div>
-            </div>
-            <div style="background:#1a1d24;border-radius:8px;padding:14px">
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;margin-bottom:4px">CIGARETTE EQUIVALENT</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:700;color:#f5a623">{impact['cigarettes']} cigarettes</div>
-                <div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today's air for 24 hours</div>
-            </div>
-        <div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today\'s air for 24 hours</div>
+        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div style="font-size:32px">{impact["icon"]}</div><div><div style="font-size:15px;font-weight:600;color:#e8eaf0">{impact["summary"]}</div><div style="font-size:11px;color:#6b7280;margin-top:2px">{impact["visibility"]}</div></div></div><div style="background:#1a1d24;border-radius:8px;padding:14px"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:4px">CIGARETTE EQUIVALENT</div><div style="font-family:IBM Plex Mono,monospace;font-size:28px;font-weight:700;color:#f5a623">{impact["cigarettes"]} cigarettes</div><div style="font-size:11px;color:#6b7280;margin-top:2px">Equivalent lung damage from breathing today air for 24 hours</div></div></div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     with li2:
-        st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div>
-            <div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact['activity']}</div>
-            {"" if not impact.get("avoid") else f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:10px 12px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>'}
-        </div>""", unsafe_allow_html=True)
+        avoid_html = f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>' if impact.get("avoid") else ""
+        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
+
+
 
     with li3:
         st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:8px">SENSITIVE GROUPS</div>', unsafe_allow_html=True)
@@ -438,8 +438,8 @@ if st.session_state.page == "home":
                 pm25_s = station_readings.get(station["name"], current_pm25)
                 info_s = aqi_info(pm25_s)
                 color = color_map.get(info_s["category"],"orange")
-                popup_html = f'<div style="font-family:monospace;min-width:180px"><b>{station["name"]}</b><br><small style="color:#666">{station["area"]} · {station["type"]}</small><br><br><span style="font-size:22px;font-weight:700;color:{info_s["color"]}">{pm25_s} µg/m³</span><br>AQI {info_s["aqi"]} — {info_s["category"]}<br><small>≈ {round(pm25_s/22,1)} cigarettes/day</small></div>'
-                folium.CircleMarker(location=[station["lat"],station["lon"]],radius=18,color=color,fill=True,fill_color=color,fill_opacity=0.7,weight=2,popup=folium.Popup(popup_html,max_width=220),tooltip=f"{station['name']}: {pm25_s} µg/m³").add_to(m)
+                popup_html = f'<div style="font-family:monospace;min-width:180px"><b>{station["name"]}</b><br><small style="color:#666">{station["area"]} · {station["type"]}</small><br><br><span style="font-size:22px;font-weight:700;color:{info_s["color"]}">{pm25_s} ug/m3</span><br>AQI {info_s["aqi"]} — {info_s["category"]}<br><small>≈ {round(pm25_s/22,1)} cigarettes/day</small></div>'
+                folium.CircleMarker(location=[station["lat"],station["lon"]],radius=18,color=color,fill=True,fill_color=color,fill_opacity=0.7,weight=2,popup=folium.Popup(popup_html,max_width=220),tooltip=f"{station['name']}: {pm25_s} ug/m3").add_to(m)
                 folium.Marker(location=[station["lat"],station["lon"]],icon=folium.DivIcon(html=f'<div style="font-family:monospace;font-size:10px;font-weight:700;color:white;text-align:center;margin-top:-6px">{pm25_s}</div>',icon_size=(40,20),icon_anchor=(20,10))).add_to(m)
             for loc in KEY_LOCATIONS:
                 folium.Marker(location=[loc["lat"],loc["lon"]],icon=folium.DivIcon(html=f'<div style="font-family:monospace;font-size:9px;color:#aaa;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;white-space:nowrap">{loc["name"]}</div>',icon_size=(100,20),icon_anchor=(50,10)),tooltip=f"{loc['name']} — {loc['note']}").add_to(m)
@@ -520,7 +520,7 @@ elif st.session_state.page == "creator":
             <div style="font-size:12px;color:#9ca3af;line-height:1.7">
                 Built entirely from scratch using Python, TensorFlow and Streamlit.
                 The BiLSTM model is trained on real CPCB sensor data from Guwahati
-                and achieves a MAE of ~14 µg/m³ on PM2.5 prediction.
+                and achieves a MAE of ~14 ug/m3 on PM2.5 prediction.
             </div>
             <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
                 <span style="background:#1a1d24;border:0.5px solid #2a2d35;border-radius:20px;padding:4px 10px;font-size:10px;color:#f5a623">Python</span>
@@ -554,7 +554,7 @@ elif st.session_state.page == "transparency":
                 <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:8px">WHAT THIS MEANS FOR YOU</div>
                 <div style="font-size:12px;color:#c8cdd6;line-height:1.7">
                     When the model predicts PM2.5 = 100, the real value is typically between
-                    <span style="color:#f5a623;font-weight:600">{round(100-mae,0):.0f} and {round(100+mae,0):.0f} ug/m3</span>.
+                    between <span style="color:#f5a623;font-weight:600">{int(round(100-mae,0))} and {int(round(100+mae,0))} ug/m3</span>.
                     This is why we show a confidence score rather than claiming exact predictions.
                 </div>
             </div>""", unsafe_allow_html=True)
@@ -575,8 +575,8 @@ elif st.session_state.page == "transparency":
             ("Data refresh","Every 30 minutes"),
         ]:
             st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280;font-family:IBM Plex Mono,monospace">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:55%">{v}</span></div>', unsafe_allow_html=True)
-        st.markdown('''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:14px;margin-top:12px;font-size:11px;color:#6b7280;line-height:1.7">
-            <strong style="color:#c8cdd6">Disclaimer:</strong> This dashboard is for informational purposes only.
-            For official data, refer to CPCB or Assam Pollution Control Board (APCB).
-            Do not use this for medical decisions.
-        </div>''', unsafe_allow_html=True)
+        st.markdown('<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:14px;margin-top:12px;font-size:11px;color:#6b7280;line-height:1.7">Disclaimer: This dashboard is for informational purposes only. For official data, refer to CPCB or Assam Pollution Control Board (APCB). Do not use this for medical decisions.</div>', unsafe_allow_html=True)
+
+
+
+
