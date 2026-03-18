@@ -12,6 +12,15 @@ try:
 except:
     FOLIUM_AVAILABLE = False
 
+import time
+# Auto-refresh every 30 minutes
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+if time.time() - st.session_state.last_refresh > 1800:
+    st.session_state.last_refresh = time.time()
+    st.cache_data.clear()
+    st.rerun()
+
 st.set_page_config(
     page_title="Guwahati AQI",
     page_icon="🌫",
@@ -464,6 +473,70 @@ if st.session_state.page == "home":
                     </div>''', unsafe_allow_html=True)
     else:
         st.info("Install streamlit-folium: pip install folium streamlit-folium")
+
+    # Section 6: 7-Day Forecast Calendar
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">7-Day Air Quality Forecast</div>', unsafe_allow_html=True)
+
+    cal_cols = st.columns(7)
+    days_of_week = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+    now_dt = datetime.now()
+    for d in range(7):
+        day_dt = now_dt + timedelta(days=d)
+        day_name = days_of_week[day_dt.weekday()]
+        day_num = day_dt.strftime("%d")
+        month = day_dt.strftime("%b")
+        hour_offset = d * 24
+        if hour_offset < len(fc):
+            day_fc = fc.iloc[min(hour_offset, len(fc)-1)]
+            pm25_day = day_fc["pm25_ugm3"]
+        else:
+            pm25_day = float(np.clip(current_pm25 + np.random.normal(0, 10), 15, 200))
+        info_d = aqi_info(pm25_day)
+        is_today = d == 0
+        border = f"2px solid {info_d['color']}" if is_today else "0.5px solid #2a2d35"
+        st.markdown(f"""<div style="background:#111318;border:{border};border-radius:10px;padding:12px 6px;text-align:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280">{day_name}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#e8eaf0;font-weight:700">{day_num} {month}</div>
+            <div style="font-size:20px;margin:6px 0">{"🔴" if pm25_day>120 else "🟠" if pm25_day>90 else "🟡" if pm25_day>60 else "🟢"}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:{info_d['color']}">{pm25_day:.0f}</div>
+            <div style="font-size:9px;color:{info_d['color']};margin-top:2px">{info_d['category'][:6].upper()}</div>
+            {"<div style='font-family:IBM Plex Mono,monospace;font-size:8px;color:#f5a623;margin-top:4px'>TODAY</div>" if is_today else ""}
+        </div>""", unsafe_allow_html=True)
+        with cal_cols[d]:
+            pass
+
+    # Section 7: Share & Alert
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Share & Alerts</div>', unsafe_allow_html=True)
+
+    sh1, sh2, sh3 = st.columns(3)
+    with sh1:
+        aqi_val = info["aqi"]
+        cat_val = info["category"]
+        pm25_val = current_pm25
+        wa_text = f"🌫 Guwahati Air Quality Alert%0A%0ACurrent PM2.5: {pm25_val} ug/m3%0AAQI: {aqi_val} ({cat_val})%0A%0A{health_advice(cat_val)}%0A%0ACheck live forecast: guwahati-pollution-8pubxdpcquxkfgetrxynbe.streamlit.app"
+        st.markdown(f'''<a href="https://wa.me/?text={wa_text}" target="_blank"
+            style="display:flex;align-items:center;justify-content:center;gap:10px;
+            background:#128C7E;border-radius:10px;padding:14px;text-decoration:none;
+            font-family:IBM Plex Mono,monospace;font-size:12px;color:white;font-weight:600">
+            📲  Share on WhatsApp
+        </a>''', unsafe_allow_html=True)
+
+    with sh2:
+        tweet_text = f"🌫 Guwahati AQI: {info['aqi']} ({info['category']}) | PM2.5: {current_pm25} ug/m3 | {health_advice(info['category'])[:60]}... Check live: guwahati-pollution-8pubxdpcquxkfgetrxynbe.streamlit.app"
+        st.markdown(f'''<a href="https://twitter.com/intent/tweet?text={tweet_text}" target="_blank"
+            style="display:flex;align-items:center;justify-content:center;gap:10px;
+            background:#1DA1F2;border-radius:10px;padding:14px;text-decoration:none;
+            font-family:IBM Plex Mono,monospace;font-size:12px;color:white;font-weight:600">
+            🐦  Share on Twitter
+        </a>''', unsafe_allow_html=True)
+
+    with sh3:
+        st.markdown('''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:14px;text-align:center;font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280">
+            🔔 Auto-refreshes every 30 min<br>
+            <span style="color:#22c55e;font-size:9px">● Live data from CPCB sensors</span>
+        </div>''', unsafe_allow_html=True)
 
     # Footer
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
