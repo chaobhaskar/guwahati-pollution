@@ -478,9 +478,9 @@ if st.session_state.page == "home":
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">7-Day Air Quality Forecast</div>', unsafe_allow_html=True)
 
-    cal_cols = st.columns(7)
     days_of_week = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
     now_dt = datetime.now()
+    cal_cols = st.columns(7)
     for d in range(7):
         day_dt = now_dt + timedelta(days=d)
         day_name = days_of_week[day_dt.weekday()]
@@ -488,23 +488,16 @@ if st.session_state.page == "home":
         month = day_dt.strftime("%b")
         hour_offset = d * 24
         if hour_offset < len(fc):
-            day_fc = fc.iloc[min(hour_offset, len(fc)-1)]
-            pm25_day = day_fc["pm25_ugm3"]
+            pm25_day = fc.iloc[min(hour_offset, len(fc)-1)]["pm25_ugm3"]
         else:
             pm25_day = float(np.clip(current_pm25 + np.random.normal(0, 10), 15, 200))
         info_d = aqi_info(pm25_day)
         is_today = d == 0
         border = f"2px solid {info_d['color']}" if is_today else "0.5px solid #2a2d35"
-        st.markdown(f"""<div style="background:#111318;border:{border};border-radius:10px;padding:12px 6px;text-align:center">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280">{day_name}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#e8eaf0;font-weight:700">{day_num} {month}</div>
-            <div style="font-size:20px;margin:6px 0">{"🔴" if pm25_day>120 else "🟠" if pm25_day>90 else "🟡" if pm25_day>60 else "🟢"}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:{info_d['color']}">{pm25_day:.0f}</div>
-            <div style="font-size:9px;color:{info_d['color']};margin-top:2px">{info_d['category'][:6].upper()}</div>
-            {"<div style='font-family:IBM Plex Mono,monospace;font-size:8px;color:#f5a623;margin-top:4px'>TODAY</div>" if is_today else ""}
-        </div>""", unsafe_allow_html=True)
+        dot = "🔴" if pm25_day>120 else "🟠" if pm25_day>90 else "🟡" if pm25_day>60 else "🟢"
+        today_badge = "<div style='font-family:IBM Plex Mono,monospace;font-size:8px;color:#f5a623;margin-top:4px'>TODAY</div>" if is_today else ""
         with cal_cols[d]:
-            pass
+            st.markdown(f'<div style="background:#111318;border:{border};border-radius:10px;padding:12px 6px;text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280">{day_name}</div><div style="font-family:IBM Plex Mono,monospace;font-size:13px;color:#e8eaf0;font-weight:700">{day_num} {month}</div><div style="font-size:20px;margin:6px 0">{dot}</div><div style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;color:{info_d["color"]}">{pm25_day:.0f}</div><div style="font-size:9px;color:{info_d["color"]};margin-top:2px">{info_d["category"][:6].upper()}</div>{today_badge}</div>', unsafe_allow_html=True)
 
     # Section 7: Share & Alert
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
