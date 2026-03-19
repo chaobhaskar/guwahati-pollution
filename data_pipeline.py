@@ -209,7 +209,8 @@ class MeteoFetcher:
                 "wind_direction_10m",
                 "surface_pressure",
                 "precipitation",
-                "boundary_layer_height",   # critical – low BLH traps pollution
+                "boundary_layer_height",
+                "dewpoint_2m",   # critical – low BLH traps pollution
                 "shortwave_radiation",
             ]),
             "timezone": "Asia/Kolkata",
@@ -236,6 +237,7 @@ class MeteoFetcher:
                 "wind_speed_10m", "wind_direction_10m",
                 "surface_pressure", "precipitation",
                 "boundary_layer_height",
+                "dewpoint_2m",
             ]),
             "forecast_days": days_ahead,
             "timezone": "Asia/Kolkata",
