@@ -108,7 +108,7 @@ def load_data():
     if files:
         import os as _os
         age_hours = (pd.Timestamp.now() - pd.Timestamp(_os.path.getmtime(files[0]), unit='s')).total_seconds() / 3600
-        if age_hours < 2:
+        if age_hours < 24 * 60:  # accept up to 60 days old
             df = pd.read_csv(files[0],parse_dates=["datetime"])
             df = df[df["pm25"].notna()&(df["pm25"]>0)]
             if not df.empty:
@@ -127,7 +127,9 @@ def fetch_live_data():  # no cache - always fresh
             pass
         headers = {"X-API-Key": key}
         rows = []
-        for sensor_id, param in [(12235761,"pm25"),(12235760,"pm10")]:
+        # Use Pan Bazaar as primary (most recent data)
+        for sensor_id, param in [(12236490,"pm25"),(12236489,"pm10"),
+                                  (12235761,"pm25"),(12235760,"pm10")]:
             r = requests.get(f"https://api.openaq.org/v3/sensors/{sensor_id}/hours",params={"limit":500},headers=headers,timeout=15)
             if r.status_code==200:
                 for rec in r.json().get("results",[]):
@@ -366,7 +368,7 @@ if st.session_state.page == "home":
 
 
     # Show data source info
-    data_source = "Local CSV" if glob.glob("data/raw/*.csv") else "Live API"
+    data_source = "CPCB via OpenAQ (last sync: Feb 2025 - sensors offline)"
     latest_time = hist["datetime"].max().strftime("%d %b %Y %H:%M") if not hist.empty else "Unknown"
     st.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#374151;text-align:right;margin-bottom:8px">Data source: {data_source} · Latest reading: {latest_time} IST</div>', unsafe_allow_html=True)
 
