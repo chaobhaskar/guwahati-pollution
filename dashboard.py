@@ -97,6 +97,12 @@ def local_impact(pm25):
 @st.cache_data(ttl=600)
 def load_data():
     # On cloud: always fetch live from API
+    # Debug: show data source in sidebar
+    try:
+        import streamlit as _st
+        _st.sidebar.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#374151;margin-top:8px">Data source: API fetch</div>', unsafe_allow_html=True)
+    except:
+        pass
     # On local: use CSV if available and recent (less than 2 hours old)
     files = sorted(glob.glob("data/raw/*.csv"),key=os.path.getmtime,reverse=True)
     if files:
@@ -116,6 +122,8 @@ def fetch_live_data():  # refresh every 10 minutes
             key = st.secrets.get("OPENAQ_API_KEY", os.environ.get("OPENAQ_API_KEY",""))
         except:
             key = os.environ.get("OPENAQ_API_KEY","")
+        if not key:
+            key = "a8dd75918c15a522ba6eaca66bf8e690ba38718f4f5f5d520d53e87b85eec2e2"
         headers = {"X-API-Key": key}
         rows = []
         for sensor_id, param in [(12235761,"pm25"),(12235760,"pm10")]:
