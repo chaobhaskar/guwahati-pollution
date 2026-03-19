@@ -94,13 +94,19 @@ def local_impact(pm25):
     else:
         return {"cigarettes":cigs,"summary":"Hazardous — health emergency conditions.","activity":"Stay indoors with windows sealed. Use air purifier if available.","avoid":"Do not go outside without N95 mask. Cancel all outdoor events.","zones":["Entire city affected","Khanapara","Basistha","Jalukbari"],"icon":"⛔","visibility":"Severe smog — visibility below 1km in parts of the city."}
 
-@st.cache_data(ttl=1800)
+@st.cache_data(ttl=600)
 def load_data():
+    # On cloud: always fetch live from API
+    # On local: use CSV if available and recent (less than 2 hours old)
     files = sorted(glob.glob("data/raw/*.csv"),key=os.path.getmtime,reverse=True)
     if files:
-        df = pd.read_csv(files[0],parse_dates=["datetime"])
-        df = df[df["pm25"].notna()&(df["pm25"]>0)]
-        return df.sort_values("datetime").reset_index(drop=True)
+        import os as _os
+        age_hours = (pd.Timestamp.now() - pd.Timestamp(_os.path.getmtime(files[0]), unit='s')).total_seconds() / 3600
+        if age_hours < 2:
+            df = pd.read_csv(files[0],parse_dates=["datetime"])
+            df = df[df["pm25"].notna()&(df["pm25"]>0)]
+            if not df.empty:
+                return df.sort_values("datetime").reset_index(drop=True)
     return fetch_live_data()
 
 @st.cache_data(ttl=600)
