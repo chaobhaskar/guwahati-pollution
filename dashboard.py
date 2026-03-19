@@ -115,15 +115,15 @@ def load_data():
                 return df.sort_values("datetime").reset_index(drop=True)
     return fetch_live_data()
 
-@st.cache_data(ttl=600)
-def fetch_live_data():  # refresh every 10 minutes
+def fetch_live_data():  # no cache - always fresh
     try:
+        key = "a8dd75918c15a522ba6eaca66bf8e690ba38718f4f5f5d520d53e87b85eec2e2"
         try:
-            key = st.secrets.get("OPENAQ_API_KEY", os.environ.get("OPENAQ_API_KEY",""))
+            secret_key = st.secrets.get("OPENAQ_API_KEY", "")
+            if secret_key:
+                key = secret_key
         except:
-            key = os.environ.get("OPENAQ_API_KEY","")
-        if not key:
-            key = "a8dd75918c15a522ba6eaca66bf8e690ba38718f4f5f5d520d53e87b85eec2e2"
+            pass
         headers = {"X-API-Key": key}
         rows = []
         for sensor_id, param in [(12235761,"pm25"),(12235760,"pm10")]:
