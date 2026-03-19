@@ -103,8 +103,8 @@ def load_data():
         return df.sort_values("datetime").reset_index(drop=True)
     return fetch_live_data()
 
-@st.cache_data(ttl=1800)
-def fetch_live_data():
+@st.cache_data(ttl=600)
+def fetch_live_data():  # refresh every 10 minutes
     try:
         try:
             key = st.secrets.get("OPENAQ_API_KEY", os.environ.get("OPENAQ_API_KEY",""))
