@@ -117,6 +117,7 @@ def load_data():
 
 def fetch_live_data():  # no cache - always fresh
     try:
+        st.sidebar.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#f5a623">Fetching live data...</div>', unsafe_allow_html=True)
         key = "a8dd75918c15a522ba6eaca66bf8e690ba38718f4f5f5d520d53e87b85eec2e2"
         try:
             secret_key = st.secrets.get("OPENAQ_API_KEY", "")
@@ -138,7 +139,10 @@ def fetch_live_data():  # no cache - always fresh
             df = df[df["pm25"].notna()&(df["pm25"]>5)]
             return df.sort_values("datetime").reset_index(drop=True)
     except Exception as e:
-        pass
+        try:
+            st.sidebar.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444">API Error: {str(e)[:50]}</div>', unsafe_allow_html=True)
+        except:
+            pass
     return pd.DataFrame()
 
 @st.cache_data(ttl=1800)
