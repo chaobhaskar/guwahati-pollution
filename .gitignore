@@ -1,5 +1,6 @@
 venv/
-data/
 models/
 *.pyc 
 .DS_Store
+dashboard copy.py
+dashboard_backup.py
