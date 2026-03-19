@@ -365,6 +365,11 @@ if st.session_state.page == "home":
 
 
 
+    # Show data source info
+    data_source = "Local CSV" if glob.glob("data/raw/*.csv") else "Live API"
+    latest_time = hist["datetime"].max().strftime("%d %b %Y %H:%M") if not hist.empty else "Unknown"
+    st.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#374151;text-align:right;margin-bottom:8px">Data source: {data_source} · Latest reading: {latest_time} IST</div>', unsafe_allow_html=True)
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Local Impact</div>', unsafe_allow_html=True)
 
