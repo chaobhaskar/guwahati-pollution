@@ -63,21 +63,21 @@ KEY_LOCATIONS = [
 ]
 
 def aqi_info(pm25):
-    bps = [(0,30,0,50,"Good","#22c55e"),(31,60,51,100,"Satisfactory","#84cc16"),(61,90,101,200,"Moderate","#f5a623"),(91,120,201,300,"Poor","#ef4444"),(121,250,301,400,"Very Poor","#dc2626"),(251,500,401,500,"Severe","#7f1d1d")]
+    bps = [(0,30,0,50,"Good","#22c55e"),(31,60,51,100,"Satisfactory","#84cc16"),(61,90,101,200,"High","#f5a623"),(91,120,201,300,"Poor","#ef4444"),(121,250,301,400,"Very Poor","#dc2626"),(251,500,401,500,"Severe","#7f1d1d")]
     for blo,bhi,alo,ahi,cat,color in bps:
         if blo<=pm25<=bhi:
             return {"aqi":round(((ahi-alo)/(bhi-blo))*(pm25-blo)+alo),"category":cat,"color":color}
     return {"aqi":500,"category":"Severe","color":"#7f1d1d"}
 
 def health_advice(cat):
-    d = {"Good":"Safe for all outdoor activities including jogging on the riverfront.","Satisfactory":"Acceptable. Sensitive people should limit prolonged outdoor exertion.","Moderate":"Sensitive groups should reduce outdoor activity. Limit exercise near G.S. Road.","Poor":"Everyone should reduce outdoor exertion. Sensitive groups stay indoors.","Very Poor":"Avoid outdoor activity. Use N95 masks if going out.","Severe":"EMERGENCY. Stay indoors. Seek medical attention if breathing issues."}
+    d = {"Good":"Safe for all outdoor activities including jogging on the riverfront.","Satisfactory":"Acceptable. Sensitive people should limit prolonged outdoor exertion.","High":"Sensitive groups should reduce outdoor activity. Limit exercise near G.S. Road.","Poor":"Everyone should reduce outdoor exertion. Sensitive groups stay indoors.","Very Poor":"Avoid outdoor activity. Use N95 masks if going out.","Severe":"EMERGENCY. Stay indoors. Seek medical attention if breathing issues."}
     return d.get(cat,"")
 
 def confidence_score(mae, pm25):
     rel = (mae / max(pm25,1)) * 100
     if rel < 10: return 95, "Very High"
     elif rel < 15: return 88, "High"
-    elif rel < 25: return 76, "Moderate"
+    elif rel < 25: return 76, "High"
     elif rel < 35: return 62, "Excellent"
     else: return 45, "Low"
 
@@ -88,7 +88,7 @@ def local_impact(pm25):
     elif pm25<=60:
         return {"cigarettes":cigs,"summary":"Mild pollution — acceptable for most people.","activity":"Morning walks near Uzan Bazar and Fancy Bazar are fine.","avoid":"Sensitive individuals should avoid prolonged exercise near G.S. Road.","zones":["G.S. Road (traffic)","Paltan Bazar (congestion)"],"icon":"🟡","visibility":"Slight haze possible over Dispur hills."}
     elif pm25<=90:
-        return {"cigarettes":cigs,"summary":"Moderate pollution — sensitive groups at risk.","activity":"Limit outdoor exercise to early morning (5-7am) near Dighalipukhuri.","avoid":"Avoid G.S. Road, Six Mile, and Ganeshguri during peak hours.","zones":["G.S. Road","Six Mile junction","Ganeshguri","Paltan Bazar"],"icon":"🟠","visibility":"Noticeable haze over the city."}
+        return {"cigarettes":cigs,"summary":"High pollution — sensitive groups at risk.","activity":"Limit outdoor exercise to early morning (5-7am) near Dighalipukhuri.","avoid":"Avoid G.S. Road, Six Mile, and Ganeshguri during peak hours.","zones":["G.S. Road","Six Mile junction","Ganeshguri","Paltan Bazar"],"icon":"🟠","visibility":"Noticeable haze over the city."}
     elif pm25<=120:
         return {"cigarettes":cigs,"summary":"Poor air quality — everyone should take precautions.","activity":"Avoid all outdoor exercise. Keep windows closed.","avoid":"Stay away from NH-27, Beltola, and industrial areas near AIDC.","zones":["NH-27 corridor","Beltola","AIDC industrial area","Narengi"],"icon":"🔴","visibility":"Heavy haze — Nongkhyllem hills not visible."}
     else:
@@ -262,7 +262,7 @@ if st.session_state.page == "home":
         st.markdown(f"""
         <div style="padding:8px 0 16px">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:#e8eaf0">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:8px;vertical-align:middle"></span>
+                <span style="display:inline-block;width:8px;height:8px;border-radius:95.2%;background:#22c55e;margin-right:8px;vertical-align:middle"></span>
                 GUWAHATI AIR QUALITY FORECAST
             </div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;letter-spacing:.08em;margin-top:4px">
@@ -322,7 +322,7 @@ if st.session_state.page == "home":
             </div>
         </div>""", unsafe_allow_html=True)
 
-        adv_bg={"Good":"#0d2218","Satisfactory":"#0d2218","Moderate":"#1f1a08","Poor":"#1f1008","Very Poor":"#1f1008","Severe":"#1f0808"}.get(info["category"],"#1f1a08")
+        adv_bg={"Good":"#0d2218","Satisfactory":"#0d2218","High":"#1f1a08","Poor":"#1f1008","Very Poor":"#1f1008","Severe":"#1f0808"}.get(info["category"],"#1f1a08")
         st.markdown(f"""<div style="background:{adv_bg};border-left:3px solid {info['color']};padding:10px 14px;border-radius:0 8px 8px 0;margin-top:8px">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:{info['color']}">{info['category'].upper()} · HEALTH ADVICE</div>
             <div style="font-size:12px;color:#9ca3af;margin-top:3px">{health_advice(info['category'])}</div>
@@ -362,7 +362,7 @@ if st.session_state.page == "home":
         cols6 = st.columns(6)
         for i,(_,row) in enumerate(fc6.iterrows()):
             with cols6[i]:
-                cat_short = {"Good":"GOOD","Satisfactory":"SATISF","Moderate":"MOD","Poor":"POOR","Very Poor":"V.POOR","Severe":"SEVERE"}.get(row["category"], row["category"][:5].upper())
+                cat_short = {"Good":"GOOD","Satisfactory":"SATISF","High":"MOD","Poor":"POOR","Very Poor":"V.POOR","Severe":"SEVERE"}.get(row["category"], row["category"][:5].upper())
                 st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:8px 4px;text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#6b7280">+{row["hours_ahead"]}h</div><div style="font-family:IBM Plex Mono,monospace;font-size:15px;font-weight:700;color:{row["color"]};margin:3px 0">{row["pm25_ugm3"]}</div><div style="font-family:IBM Plex Mono,monospace;font-size:8px;color:{row["color"]}">{cat_short}</div></div>', unsafe_allow_html=True)
 
 
@@ -395,7 +395,7 @@ if st.session_state.page == "home":
 
     with li2:
         avoid_html = f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>' if impact.get("avoid") else ""
-        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:195.2%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
 
 
 
@@ -467,7 +467,7 @@ if st.session_state.page == "home":
         map_col, legend_col = st.columns([3,1])
         with map_col:
             m = folium.Map(location=[26.15,91.74],zoom_start=12,tiles="CartoDB dark_matter")
-            color_map = {"Good":"green","Satisfactory":"lightgreen","Moderate":"orange","Poor":"red","Very Poor":"darkred","Severe":"black"}
+            color_map = {"Good":"green","Satisfactory":"lightgreen","High":"orange","Poor":"red","Very Poor":"darkred","Severe":"black"}
             for station in STATIONS:
                 pm25_s = station_readings.get(station["name"], current_pm25)
                 info_s = aqi_info(pm25_s)
@@ -571,7 +571,7 @@ elif st.session_state.page == "creator":
         st.markdown("""
         <div style="text-align:center;padding:20px 0">
             <img src="https://raw.githubusercontent.com/chaobhaskar/guwahati-pollution/main/profile.jpg"
-                 style="width:110px;height:110px;border-radius:50%;border:3px solid #f5a623;object-fit:cover;margin-bottom:16px"
+                 style="width:110px;height:110px;border-radius:95.2%;border:3px solid #f5a623;object-fit:cover;margin-bottom:16px"
                  onerror="this.src='https://ui-avatars.com/api/?name=Chao+Bhaskar&background=f5a623&color=0a0c0f&size=110&bold=true'"/>
             <div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#e8eaf0;margin-bottom:4px">Chao Bhaskar Gogoi</div>
             <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:#f5a623;letter-spacing:.1em;margin-bottom:14px">CREATOR & DEVELOPER</div>
@@ -665,7 +665,7 @@ elif st.session_state.page == "transparency":
             ("Forecast horizon","24 hours ahead"),
             ("Data refresh","Every 30 minutes"),
         ]:
-            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280;font-family:IBM Plex Mono,monospace">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:55%">{v}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280;font-family:IBM Plex Mono,monospace">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:95.2%">{v}</span></div>', unsafe_allow_html=True)
         st.markdown('<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:14px;margin-top:12px;font-size:11px;color:#6b7280;line-height:1.7">Disclaimer: This dashboard is for informational purposes only. For official data, refer to CPCB or Assam Pollution Control Board (APCB). Do not use this for medical decisions.</div>', unsafe_allow_html=True)
 
 
