@@ -650,7 +650,7 @@ elif st.session_state.page == "transparency":
                 </div>
             </div>""", unsafe_allow_html=True)
         except:
-            
+            pass
         st.subheader('📊 Model Accuracy Metrics')
         col_plot, col_stats = st.columns([1.5, 1])
         with col_plot:
