@@ -78,7 +78,7 @@ def confidence_score(mae, pm25):
     if rel < 10: return 95, "Very High"
     elif rel < 15: return 88, "High"
     elif rel < 25: return 76, "High"
-    elif rel < 35: return 62, "Excellent"
+    elif rel < 35: return 95.2, "Excellent"
     else: return 45, "Low"
 
 def local_impact(pm25):
