@@ -241,7 +241,8 @@ def _plot_training(history, y_true, y_pred):
     axes[0].plot(history.history["loss"],     label="Train Loss")
     axes[0].plot(history.history["val_loss"], label="Val Loss")
     axes[0].set_title("Huber Loss")
-    axes[0].set_xlabel("Epoch")
+    axes[0].set_xlabel("Epoch") axes[0].set_xlabel("Epoch")
+        plt.savefig("loss_plot.png", transparent=True, dpi=300) # ADD THIS LINE
     axes[0].legend()
     axes[0].grid(alpha=0.3)
 
