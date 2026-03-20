@@ -643,6 +643,9 @@ elif st.session_state.page == "transparency":
             st.metric('RMSE', '4.0', delta='Stable')
             st.metric('R² Score', '0.95', help='Proportion of variance explained by the model')
             st.info('Model is verified for Guwahati Valley topography.')
+        except:
+            pass
+
 
 
 
