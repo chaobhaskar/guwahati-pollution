@@ -63,7 +63,7 @@ KEY_LOCATIONS = [
 ]
 
 def aqi_info(pm25):
-    bps = [(0,30,0,50,"Good","#22c55e"),(31,60,51,100,"Satisfactory","#84cc16"),(61,90,101,200,"High","#f5a623"),(91,120,201,300,"Poor","#ef4444"),(121,250,301,400,"Very Poor","#dc2626"),(251,500,401,500,"Severe","#7f1d1d")]
+    bps = [(0,30,0,50,"Good","#22c55e"),(31,60,51,100,"Satisfactory","#84cc16"),(61,90,101,200,"High","#f5a623"),(91,120,201,300,"Poor","#22c55e"),(121,250,301,400,"Very Poor","#dc2626"),(251,500,401,500,"Severe","#7f1d1d")]
     for blo,bhi,alo,ahi,cat,color in bps:
         if blo<=pm25<=bhi:
             return {"aqi":round(((ahi-alo)/(bhi-blo))*(pm25-blo)+alo),"category":cat,"color":color}
@@ -142,7 +142,7 @@ def fetch_live_data():  # no cache - always fresh
             return df.sort_values("datetime").reset_index(drop=True)
     except Exception as e:
         try:
-            st.sidebar.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444">API Error: {str(e)[:50]}</div>', unsafe_allow_html=True)
+            st.sidebar.markdown(f'<div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#22c55e">API Error: {str(e)[:50]}</div>', unsafe_allow_html=True)
         except:
             pass
     return pd.DataFrame()
@@ -309,7 +309,7 @@ if st.session_state.page == "home":
                 st.metric("Temp / RH",f"{row['temperature_2m'].values[0]:.0f}C / {row['relative_humidity_2m'].values[0]:.0f}%")
                 st.metric("Wind",f"{row['wind_speed_10m'].values[0]:.1f} m/s")
 
-        conf_color="#22c55e" if conf_score>=85 else "#f5a623" if conf_score>=70 else "#ef4444"
+        conf_color="#22c55e" if conf_score>=85 else "#f5a623" if conf_score>=70 else "#22c55e"
         st.markdown(f"""<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:12px 14px;margin-top:8px">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;letter-spacing:.08em;margin-bottom:6px">PREDICTION CONFIDENCE</div>
             <div style="display:flex;align-items:center;gap:10px">
@@ -394,7 +394,7 @@ if st.session_state.page == "home":
 
 
     with li2:
-        avoid_html = f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>' if impact.get("avoid") else ""
+        avoid_html = f'<div style="background:#1f1008;border-left:3px solid #22c55e;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#22c55e;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>' if impact.get("avoid") else ""
         st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
 
 
@@ -448,7 +448,7 @@ if st.session_state.page == "home":
         fig3 = go.Figure(go.Heatmap(
             z=pivot.values,x=[str(c) for c in pivot.columns],
             y=[f"{h:02d}:00" for h in pivot.index],
-            colorscale=[[0,"#0d2218"],[0.2,"#22c55e"],[0.4,"#84cc16"],[0.6,"#f5a623"],[0.8,"#ef4444"],[1,"#7f1d1d"]],
+            colorscale=[[0,"#0d2218"],[0.2,"#22c55e"],[0.4,"#84cc16"],[0.6,"#f5a623"],[0.8,"#22c55e"],[1,"#7f1d1d"]],
             hovertemplate="Date: %{x}<br>Hour: %{y}<br>PM2.5: %{z:.1f}<extra></extra>",
             colorbar=dict(tickfont=dict(size=9,color="#6b7280",family="IBM Plex Mono"),thickness=10)
         ))
