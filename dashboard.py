@@ -262,7 +262,7 @@ if st.session_state.page == "home":
         st.markdown(f"""
         <div style="padding:8px 0 16px">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:#e8eaf0">
-                <span style="display:inline-block;width:8px;height:8px;border-radius:95.2%;background:#22c55e;margin-right:8px;vertical-align:middle"></span>
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:8px;vertical-align:middle"></span>
                 GUWAHATI AIR QUALITY FORECAST
             </div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;letter-spacing:.08em;margin-top:4px">
@@ -395,7 +395,7 @@ if st.session_state.page == "home":
 
     with li2:
         avoid_html = f'<div style="background:#1f1008;border-left:3px solid #ef4444;border-radius:0 8px 8px 0;padding:10px 12px;margin-top:10px"><div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#ef4444;margin-bottom:4px">AREAS TO AVOID</div><div style="font-size:12px;color:#c8cdd6">{impact["avoid"]}</div></div>' if impact.get("avoid") else ""
-        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:195.2%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:12px;padding:20px;height:100%"><div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">RECOMMENDED ACTIVITY</div><div style="font-size:13px;color:#c8cdd6;line-height:1.6;margin-bottom:14px">{impact["activity"]}</div>{avoid_html}</div>', unsafe_allow_html=True)
 
 
 
@@ -571,7 +571,7 @@ elif st.session_state.page == "creator":
         st.markdown("""
         <div style="text-align:center;padding:20px 0">
             <img src="https://raw.githubusercontent.com/chaobhaskar/guwahati-pollution/main/profile.jpg"
-                 style="width:110px;height:110px;border-radius:95.2%;border:3px solid #f5a623;object-fit:cover;margin-bottom:16px"
+                 style="width:110px;height:110px;border-radius:50%;border:3px solid #f5a623;object-fit:cover;margin-bottom:16px"
                  onerror="this.src='https://ui-avatars.com/api/?name=Chao+Bhaskar&background=f5a623&color=0a0c0f&size=110&bold=true'"/>
             <div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#e8eaf0;margin-bottom:4px">Chao Bhaskar Gogoi</div>
             <div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:#f5a623;letter-spacing:.1em;margin-bottom:14px">CREATOR & DEVELOPER</div>
@@ -665,7 +665,7 @@ elif st.session_state.page == "transparency":
             ("Forecast horizon","24 hours ahead"),
             ("Data refresh","Every 30 minutes"),
         ]:
-            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280;font-family:IBM Plex Mono,monospace">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:95.2%">{v}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #1e2028;font-size:11px"><span style="color:#6b7280;font-family:IBM Plex Mono,monospace">{k}</span><span style="color:#e8eaf0;text-align:right;max-width:60%">{v}</span></div>', unsafe_allow_html=True)
         st.markdown('<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:14px;margin-top:12px;font-size:11px;color:#6b7280;line-height:1.7">Disclaimer: This dashboard is for informational purposes only. For official data, refer to CPCB or Assam Pollution Control Board (APCB). Do not use this for medical decisions.</div>', unsafe_allow_html=True)
 
 
