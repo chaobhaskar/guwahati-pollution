@@ -409,31 +409,39 @@ if st.session_state.page == "home":
         for g in groups:
             st.markdown(f'<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:#c8cdd6">{g}</div>', unsafe_allow_html=True)
 
-    # ── Section 3: Historical Trends ──
+   # ── Section 3: Historical Trends ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Historical Trends</div>', unsafe_allow_html=True)
 
     if not hist.empty:
-        s=[0.65,0.35],vertical_spacing=0.04)
-        fig2.add_trace(go.Scatter(x=df["datetime"],y=df["pm25"],fill="tozeroy",fillcolor="rgba(245,166,35,0.08)",line=dict(color="#f5a623",width=1.5),name="PM2.5"),row=1,col=1)
+        # Added the missing slider and subplot initialization
+        days = st.select_slider("Select History Range (Days)", options=[7, 14, 30, 60], value=14)
+        df = hist.tail(days * 24)
+        
+        # This is the line that was causing the SyntaxError
+        fig2 = make_subplots(
+            rows=2, cols=1, 
+            shared_xaxes=True, 
+            row_heights=[0.65, 0.35], 
+            vertical_spacing=0.04
+        )
+        
+        # PM2.5 and PM10 Plot
+        fig2.add_trace(go.Scatter(x=df["datetime"], y=df["pm25"], fill="tozeroy", fillcolor="rgba(245,166,35,0.08)", line=dict(color="#f5a623", width=1.5), name="PM2.5"), row=1, col=1)
         if "pm10" in df.columns:
             pm10_clean = df["pm10"].clip(upper=500)
-            fig2.add_trace(go.Scatter(x=df["datetime"],y=pm10_clean,line=dict(color="#60a5fa",width=1,dash="dot"),name="PM10"),row=1,col=1)
-        fig2.add_hline(y=15,line_dash="dot",line_color="#374151",row=1,col=1)
-        fig2.add_hline(y=60,line_dash="dot",line_color="#2a3a4a",row=1,col=1)
+            fig2.add_trace(go.Scatter(x=df["datetime"], y=pm10_clean, line=dict(color="#60a5fa", width=1, dash="dot"), name="PM10"), row=1, col=1)
+        
+        # Guidelines
+        fig2.add_hline(y=15, line_dash="dot", line_color="#374151", row=1, col=1)
+        fig2.add_hline(y=60, line_dash="dot", line_color="#2a3a4a", row=1, col=1)
+        
+        # Wind Speed Plot
         if "wind_speed_10m" in df.columns:
-            fig2.add_trace(go.Bar(x=df["datetime"],y=df["wind_speed_10m"],marker_color="#1e3a4a",name="Wind m/s"),row=2,col=1)
-        fig2.update_layout(paper_bgcolor="#111318",plot_bgcolor="#111318",font=dict(family="IBM Plex Mono, monospace",color="#c8cdd6",size=10),height=400,legend=dict(orientation="h",yanchor="bottom",y=1.02,font=dict(size=10,color="#6b7280")),margin=dict(l=50,r=20,t=10,b=40))
-        st.plotly_chart(fig2,use_container_width=True,config={"displayModeBar":False})
-
-        s1,s2,s3,s4 = st.columns(4)
-        s1.metric("Avg PM2.5",f"{df['pm25'].mean():.1f} ug/m3")
-        s2.metric("Peak PM2.5",f"{df['pm25'].max():.1f} ug/m3")
-        s3.metric("Min PM2.5",f"{df['pm25'].min():.1f} ug/m3")
-        s4.metric("WHO Exceedance",f"{round((df['pm25']>15).sum()/len(df)*100,1)}% of hours")
-    else:
-        st.info("Run python data_pipeline.py first to load historical data.")
-
+            fig2.add_trace(go.Bar(x=df["datetime"], y=df["wind_speed_10m"], marker_color="#1e3a4a", name="Wind m/s"), row=2, col=1)
+            
+        fig2.update_layout(paper_bgcolor="#111318", plot_bgcolor="#111318", font=dict(family="IBM Plex Mono, monospace", color="#c8cdd6", size=10), height=400, legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=10, color="#6b7280")), margin=dict(l=50, r=20, t=10, b=40))
+        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
     # ── Section 4: Pollution Heatmap ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Pollution Heatmap — Hour of Day vs Date</div>', unsafe_allow_html=True)
