@@ -534,14 +534,72 @@ if st.session_state.page == "home":
     # This was likely the line causing the AttributeError (st.markdow)
     st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#374151;text-align:center;margin-top:20px">Interactive map uses real-time coordinates for Pan Bazaar, Railway Colony, and IITG.</div>', unsafe_allow_html=True)
 
-    # Section 6: 7-Day Forecast Calendar
-    # ── Footer / Methodology ──
+    # ── Section 6: 7-Day Forecast ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
-    # Corrected the typo from st.markdow to st.markdown
-    st.markdown('''
-        <div style="font-family:IBM Plex Mono, monospace; font-size:10px; color:#4b5563; text-align:center; padding:20px">
-            Data sourced from Open-Meteo Air Quality API & Central Pollution Control Board (CPCB). <br>
-            Developed for Atmospheric Physics Research — Guwahati, Assam.
-        </div>
-    ''', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">7-Day Forecast Profile</div>', unsafe_allow_html=True)
+
+    if not forecast.empty:
+        # Resample to daily max/avg for a clean list
+        daily_forecast = forecast.resample('D', on='datetime').agg({'pm25': 'max'}).reset_index().head(7)
+        
+        for _, row in daily_forecast.iterrows():
+            day_name = row['datetime'].strftime('%A')
+            date_str = row['datetime'].strftime('%b %d')
+            val = int(row['pm25'])
+            info = aqi_info(val)
+            
+            st.markdown(f'''
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#111318; border:0.5px solid #2a2d35; border-radius:12px; padding:12px 20px; margin-bottom:10px">
+                    <div style="flex:1">
+                        <div style="font-size:12px; font-weight:700; color:#e8eaf0">{day_name}</div>
+                        <div style="font-size:10px; color:#6b7280">{date_str}</div>
+                    </div>
+                    <div style="flex:1; text-align:center; font-family:IBM Plex Mono; font-size:18px; color:{info['color']}">{val}</div>
+                    <div style="flex:1; text-align:right; font-size:10px; color:{info['color']}; font-weight:600">{info['category'].upper()}</div>
+                </div>
+            ''', unsafe_allow_html=True)
+            # ── Section 7: Pollution Calendar ──
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Monthly Exposure Calendar</div>', unsafe_allow_html=True)
+
+    if not hist.empty:
+        # Process historical data into daily averages
+        df_cal = hist.copy()
+        df_cal['date'] = df_cal['datetime'].dt.date
+        daily_avg = df_cal.groupby('date')['pm25'].mean().reset_index()
+        
+        import plotly.express as px
+        
+        # Create a "calendar" grid (Weeks vs Days)
+        daily_avg['week'] = daily_avg['date'].apply(lambda x: x.isocalendar()[1])
+        daily_avg['day_of_week'] = daily_avg['date'].apply(lambda x: x.weekday())
+        
+        fig_cal = px.scatter(
+            daily_avg, 
+            x="week", 
+            y="day_of_week",
+            color="pm25",
+            size=[15]*len(daily_avg),
+            color_continuous_scale=[(0, "#10b981"), (0.3, "#f59e0b"), (0.6, "#ef4444"), (1, "#7f1d1d")],
+            hover_data={'date': True, 'pm25': ':.1f', 'week': False, 'day_of_week': False}
+        )
+
+        fig_cal.update_layout(
+            paper_bgcolor="#111318", plot_bgcolor="#111318",
+            height=280, margin=dict(l=10, r=10, t=10, b=10),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, tickmode='array', 
+                       tickvals=[0,1,2,3,4,5,6], 
+                       ticktext=['M','T','W','T','F','S','S']),
+            coloraxis_showscale=False
+        )
+        
+        st.plotly_chart(fig_cal, use_container_width=True, config={'displayModeBar': False})
+        
+        # Final Footer
+        st.markdown(f'''
+            <div style="font-family:IBM Plex Mono; font-size:10px; color:#4b5563; text-align:center; padding-top:20px">
+                © 2026 Brahmaputra Hope Foundation | Atmospheric Research Project <br>
+                Last Sync: {datetime.now().strftime('%H:%M:%S')} IST
+            </div>
+        ''', unsafe_allow_html=True)
