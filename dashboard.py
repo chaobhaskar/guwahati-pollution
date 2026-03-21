@@ -480,48 +480,46 @@ if st.session_state.page == "home":
     else:
         st.info("No historical data available.")
 
-    # ── Section 5: Station Map ──
+   # ── Section 5: Station Map ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="section-label">Live Monitoring Stations — Guwahati</div>', unsafe_allow_html=True)
 
     if FOLIUM_AVAILABLE:
         station_readings = fetch_station_readings()
         map_col, legend_col = st.columns([3,1])
+        
         with map_col:
-            m = folium.Map(location=[26.15,91.74],zoom_start=12,tiles="CartoDB dark_matter")
-            color_map = {"Good":"green","Satisfactory":"lightgreen","High":"orange","Poor":"red","Very Poor":"darkred","Severe":"black"}
-            for station in STATIONS:days = st.select_slider("Range", options=[7, 14, 30, 60, 90], value=14,label_visibility="collapsed")
-        df = hist.tail(days*24)
-        fig2 = make_subplots(rows=2,cols=1,shared_xaxes=True,row_height
+            # Initialize the Map
+            m = folium.Map(location=[26.15, 91.74], zoom_start=12, tiles="CartoDB dark_matter")
+            color_map = {"Good":"green","Satisfactory":"#84cc16","Moderate":"orange","Poor":"red","Very Poor":"darkred","Severe":"black"}
+            
+            for station in STATIONS:
                 pm25_s = station_readings.get(station["name"], current_pm25)
                 info_s = aqi_info(pm25_s)
-                color = color_map.get(info_s["category"],"orange")
-                popup_html = f'<div style="font-family:monospace;min-width:180px"><b>{station["name"]}</b><br><small style="color:#666">{station["area"]} · {station["type"]}</small><br><br><span style="font-size:22px;font-weight:700;color:{info_s["color"]}">{pm25_s} ug/m3</span><br>AQI {info_s["aqi"]} — {info_s["category"]}<br><small>≈ {round(pm25_s/22,1)} cigarettes/day</small></div>'
-                folium.CircleMarker(location=[station["lat"],station["lon"]],radius=18,color=color,fill=True,fill_color=color,fill_opacity=0.7,weight=2,popup=folium.Popup(popup_html,max_width=220),tooltip=f"{station['name']}: {pm25_s} ug/m3").add_to(m)
-                folium.Marker(location=[station["lat"],station["lon"]],icon=folium.DivIcon(html=f'<div style="font-family:monospace;font-size:10px;font-weight:700;color:white;text-align:center;margin-top:-6px">{pm25_s}</div>',icon_size=(40,20),icon_anchor=(20,10))).add_to(m)
-            for loc in KEY_LOCATIONS:
-                folium.Marker(location=[loc["lat"],loc["lon"]],icon=folium.DivIcon(html=f'<div style="font-family:monospace;font-size:9px;color:#aaa;background:rgba(0,0,0,0.6);padding:2px 4px;border-radius:3px;white-space:nowrap">{loc["name"]}</div>',icon_size=(100,20),icon_anchor=(50,10)),tooltip=f"{loc['name']} — {loc['note']}").add_to(m)
-            st_folium(m,width=700,height=420)
+                color = color_map.get(info_s["category"], "orange")
+                
+                # Popup with AQI info
+                popup_html = f'<div style="font-family:monospace;min-width:180px"><b>{station["name"]}</b><br><span style="color:{info_s["color"]}">{pm25_s} ug/m3</span></div>'
+                
+                folium.CircleMarker(
+                    location=[station["lat"], station["lon"]],
+                    radius=15, color=color, fill=True, fill_opacity=0.7,
+                    popup=folium.Popup(popup_html, max_width=220)
+                ).add_to(m)
+            
+            # Render Map
+            st_folium(m, width=700, height=420)
+            
         with legend_col:
             st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">STATION READINGS</div>', unsafe_allow_html=True)
             for station in STATIONS:
-                pm25_s = station_readings.get(station["name"],None)
-                if pm25_s:
-                    info_s = aqi_info(pm25_s)
-                    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:10px 12px;margin-bottom:8px">
-                        <div style="font-size:11px;font-weight:600;color:#e8eaf0">{station["name"]}</div>
-                        <div style="font-size:10px;color:#6b7280;margin-bottom:4px">{station["area"]}</div>
-                        <div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:{info_s["color"]}">{pm25_s}</div>
-                        <div style="font-size:10px;color:{info_s["color"]}">{info_s["category"]}</div>
-                    </div>''', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:10px 12px;margin-bottom:8px">
-                        <div style="font-size:11px;font-weight:600;color:#e8eaf0">{station["name"]}</div>
-                        <div style="font-size:10px;color:#6b7280">{station["area"]}</div>
-                        <div style="font-size:10px;color:#374151;margin-top:4px">No recent data</div>
-                    </div>''', unsafe_allow_html=True)
+                val = station_readings.get(station["name"], "N/A")
+                st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+                    <div style="font-size:11px;font-weight:600;color:#e8eaf0">{station["name"]}</div>
+                    <div style="font-family:IBM Plex Mono;font-size:18px;color:#f5a623">{val}</div>
+                </div>''', unsafe_allow_html=True)
     else:
-        st.info("Install streamlit-folium: pip install folium streamlit-folium")
+        st.info("Folium is not available. Please check your requirements.txt.")
 
     # Section 6: 7-Day Forecast Calendar
     st.markdow
