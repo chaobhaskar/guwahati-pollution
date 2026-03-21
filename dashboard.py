@@ -414,7 +414,7 @@ if st.session_state.page == "home":
     st.markdown('<div class="section-label">Historical Trends</div>', unsafe_allow_html=True)
 
     if not hist.empty:
-        days = st.select_slider("Range", options=[7, 14, 30, 60, 90], value=14,label_visibility="collapsed")
+        days = st.select_slider("Range", options=["Home", "Science of Air", "Creator", "Data Transparency"], value=14,label_visibility="collapsed")
         df = hist.tail(days*24)
         fig2 = make_subplots(rows=2,cols=1,shared_xaxes=True,row_heights=[0.65,0.35],vertical_spacing=0.04)
         fig2.add_trace(go.Scatter(x=df["datetime"],y=df["pm25"],fill="tozeroy",fillcolor="rgba(245,166,35,0.08)",line=dict(color="#f5a623",width=1.5),name="PM2.5"),row=1,col=1)
