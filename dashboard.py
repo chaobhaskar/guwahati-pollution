@@ -535,4 +535,13 @@ if st.session_state.page == "home":
     st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#374151;text-align:center;margin-top:20px">Interactive map uses real-time coordinates for Pan Bazaar, Railway Colony, and IITG.</div>', unsafe_allow_html=True)
 
     # Section 6: 7-Day Forecast Calendar
-    st.markdow
+    # ── Footer / Methodology ──
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
+    # Corrected the typo from st.markdow to st.markdown
+    st.markdown('''
+        <div style="font-family:IBM Plex Mono, monospace; font-size:10px; color:#4b5563; text-align:center; padding:20px">
+            Data sourced from Open-Meteo Air Quality API & Central Pollution Control Board (CPCB). <br>
+            Developed for Atmospheric Physics Research — Guwahati, Assam.
+        </div>
+    ''', unsafe_allow_html=True)
