@@ -414,11 +414,11 @@ if st.session_state.page == "home":
     st.markdown('<div class="section-label">Historical Trends</div>', unsafe_allow_html=True)
 
     if not hist.empty:
-        # Added the missing slider and subplot initialization
-        days = st.select_slider("Select History Range (Days)", options=[7, 14, 30, 60], value=14)
-        df = hist.tail(days * 24)
+        # 1. Fixed the slider logic
+        days = st.select_slider("Select History Range (Days)", options=[7, 14, 30, 60], value=14, key="hist_slider")
+        df_plot = hist.tail(days * 24)
         
-        # This is the line that was causing the SyntaxError
+        # 2. Fixed the broken make_subplots call
         fig2 = make_subplots(
             rows=2, cols=1, 
             shared_xaxes=True, 
@@ -426,21 +426,38 @@ if st.session_state.page == "home":
             vertical_spacing=0.04
         )
         
-        # PM2.5 and PM10 Plot
-        fig2.add_trace(go.Scatter(x=df["datetime"], y=df["pm25"], fill="tozeroy", fillcolor="rgba(245,166,35,0.08)", line=dict(color="#f5a623", width=1.5), name="PM2.5"), row=1, col=1)
-        if "pm10" in df.columns:
-            pm10_clean = df["pm10"].clip(upper=500)
-            fig2.add_trace(go.Scatter(x=df["datetime"], y=pm10_clean, line=dict(color="#60a5fa", width=1, dash="dot"), name="PM10"), row=1, col=1)
+        # 3. Add PM2.5 Trace
+        fig2.add_trace(go.Scatter(
+            x=df_plot["datetime"], y=df_plot["pm25"],
+            fill="tozeroy", fillcolor="rgba(245,166,35,0.08)",
+            line=dict(color="#f5a623", width=1.5), name="PM2.5"
+        ), row=1, col=1)
         
-        # Guidelines
+        # 4. Add PM10 Trace if available
+        if "pm10" in df_plot.columns:
+            pm10_clean = df_plot["pm10"].clip(upper=500)
+            fig2.add_trace(go.Scatter(
+                x=df_plot["datetime"], y=pm10_clean,
+                line=dict(color="#60a5fa", width=1, dash="dot"), name="PM10"
+            ), row=1, col=1)
+            
+        # 5. Add WHO/India Guidelines
         fig2.add_hline(y=15, line_dash="dot", line_color="#374151", row=1, col=1)
         fig2.add_hline(y=60, line_dash="dot", line_color="#2a3a4a", row=1, col=1)
         
-        # Wind Speed Plot
-        if "wind_speed_10m" in df.columns:
-            fig2.add_trace(go.Bar(x=df["datetime"], y=df["wind_speed_10m"], marker_color="#1e3a4a", name="Wind m/s"), row=2, col=1)
+        # 6. Add Wind Speed Trace
+        if "wind_speed_10m" in df_plot.columns:
+            fig2.add_trace(go.Bar(
+                x=df_plot["datetime"], y=df_plot["wind_speed_10m"],
+                marker_color="#1e3a4a", name="Wind m/s"
+            ), row=2, col=1)
             
-        fig2.update_layout(paper_bgcolor="#111318", plot_bgcolor="#111318", font=dict(family="IBM Plex Mono, monospace", color="#c8cdd6", size=10), height=400, legend=dict(orientation="h", yanchor="bottom", y=1.02, font=dict(size=10, color="#6b7280")), margin=dict(l=50, r=20, t=10, b=40))
+        fig2.update_layout(
+            paper_bgcolor="#111318", plot_bgcolor="#111318",
+            font=dict(family="IBM Plex Mono, monospace", color="#c8cdd6", size=10),
+            height=400, showlegend=True,
+            margin=dict(l=50, r=20, t=10, b=40)
+        )
         st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
     # ── Section 4: Pollution Heatmap ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
