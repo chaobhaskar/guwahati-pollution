@@ -241,11 +241,11 @@ def _plot_training(history, y_true, y_pred):
     axes[0].plot(history.history["loss"],     label="Train Loss")
     axes[0].plot(history.history["val_loss"], label="Val Loss")
     axes[0].set_title("Huber Loss")
-    axes[0].set_xlabel("Epoch") axes[0].set_xlabel("Epoch")
-        plt.savefig("loss_plot.png", transparent=True, dpi=300) # ADD THIS LINE
+    axes[0].set_xlabel("Epoch")
     axes[0].legend()
     axes[0].grid(alpha=0.3)
 
+    # Predicted vs actual (first 200 test samples)
     # Predicted vs actual (first 200 test samples)
     n = min(200, len(y_true))
     axes[1].plot(y_true[:n],  label="Actual PM2.5", alpha=0.8, lw=1.5)

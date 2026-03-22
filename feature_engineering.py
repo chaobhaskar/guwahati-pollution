@@ -252,13 +252,20 @@ def engineer_features(df: pd.DataFrame,
 
     # ── 10. Scale features ───────────────────────────────────────────────
     if fit_scaler:
-        scaler = RobustScaler()   # robust to PM2.5 spike outliers
+        # IMPORTANT: fit target scaler on RAW pm25 BEFORE feature scaling
+        target_scaler = RobustScaler()
+        target_scaler.fit(df[[target_col]])
+        joblib.dump(target_scaler, f"{SCALER_DIR}/target_scaler.pkl")
+        print(f"[Features] Target scaler fitted on raw {target_col}: "
+              f"center={target_scaler.center_[0]:.2f} scale={target_scaler.scale_[0]:.2f}")
+
+        # Now scale ALL features including target for model input
+        scaler = RobustScaler()
         df[feature_cols] = scaler.fit_transform(df[feature_cols])
         joblib.dump(scaler, f"{SCALER_DIR}/feature_scaler.pkl")
 
-        target_scaler = RobustScaler()
-        df[[target_col]] = target_scaler.fit_transform(df[[target_col]])
-        joblib.dump(target_scaler, f"{SCALER_DIR}/target_scaler.pkl")
+        # Scale target column for model training
+        df[[target_col]] = target_scaler.transform(df[[target_col]])
         print(f"[Features] Scalers saved → {SCALER_DIR}/")
     else:
         scaler = joblib.load(f"{SCALER_DIR}/feature_scaler.pkl")
