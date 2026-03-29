@@ -271,7 +271,15 @@ if __name__ == "__main__":
     print("=== Guwahati Pollution Prediction – Training ===\n")
 
     # 1. More data — 180 days of real readings
-    df = build_dataset(days_back=90)
+    # Use largest available dataset
+    import glob as _glob, pandas as _pd
+    candidates = sorted(_glob.glob("data/raw/*.csv"), key=os.path.getsize, reverse=True)
+    if candidates:
+        df = _pd.read_csv(candidates[0], parse_dates=["datetime"])
+        df = df[df["pm25"].notna() & (df["pm25"] > 0)]
+        print(f"[Model] Using {len(df)} rows from {candidates[0]}")
+    else:
+        df = build_dataset(days_back=90)
 
     # 2. Features
     df_feat, feature_cols = engineer_features(df, target_col="pm25", fit_scaler=True)
