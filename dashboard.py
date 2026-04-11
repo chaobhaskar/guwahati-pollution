@@ -181,6 +181,38 @@ def get_weather():
         return pd.DataFrame()
 
 @st.cache_data(ttl=600)
+@st.cache_data(ttl=86400)
+def fetch_sentinel5p():
+    try:
+        r = requests.get("https://air-quality-api.open-meteo.com/v1/air-quality", params={
+            "latitude": 26.1445, "longitude": 91.7362,
+            "hourly": "pm2_5,pm10,nitrogen_dioxide,ozone,aerosol_optical_depth,dust,uv_index",
+            "timezone": "Asia/Kolkata",
+            "forecast_days": 1, "past_days": 3,
+        }, timeout=15)
+        data = r.json()
+        if "hourly" in data:
+            df = pd.DataFrame(data["hourly"])
+            df.rename(columns={"time":"datetime","pm2_5":"pm25_sat"}, inplace=True)
+            df["datetime"] = pd.to_datetime(df["datetime"])
+            df = df.sort_values("datetime")
+            latest = df[df["pm25_sat"].notna()].tail(1)
+            if not latest.empty:
+                return {
+                    "pm25_satellite": round(float(latest["pm25_sat"].values[0]),1),
+                    "no2":   round(float(latest["nitrogen_dioxide"].values[0]),2) if latest["nitrogen_dioxide"].notna().any() else None,
+                    "ozone": round(float(latest["ozone"].values[0]),1) if latest["ozone"].notna().any() else None,
+                    "aerosol_optical_depth": round(float(latest["aerosol_optical_depth"].values[0]),3) if latest["aerosol_optical_depth"].notna().any() else None,
+                    "dust":  round(float(latest["dust"].values[0]),1) if latest["dust"].notna().any() else None,
+                    "uv_index": round(float(latest["uv_index"].values[0]),1) if latest["uv_index"].notna().any() else None,
+                    "source": "CAMS/Copernicus via Open-Meteo",
+                    "updated": str(latest["datetime"].values[0]),
+                    "df": df,
+                }
+    except Exception as e:
+        pass
+    return {}
+
 def fetch_station_readings():
     readings = {}
     try:
