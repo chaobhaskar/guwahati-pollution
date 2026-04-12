@@ -569,8 +569,9 @@ if st.session_state.page == "home":
             
             for station in STATIONS:
                 # Use station-specific reading if available, else fallback to current_pm25
-                pm25_s = station_readings.get(station["name"], current_pm25)
-                info_s = aqi_info(pm25_s)
+                reading = station_readings.get(station["name"], {})
+                pm25_s = reading.get("pm25", current_pm25) if isinstance(reading, dict) else float(reading) if reading else current_pm25
+                pm25_s = float(pm25_s) if pm25_s else current_pm25
                 
                 # Popup with AQI info
                 popup_html = f'''
