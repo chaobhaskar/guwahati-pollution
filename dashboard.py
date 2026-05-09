@@ -598,26 +598,26 @@ if st.session_state.page == "home":
         with legend_col:
             st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:10px">STATION LIST</div>', unsafe_allow_html=True)
             for station in STATIONS:
-    reading = station_readings.get(station["name"], {})
-    pm25_val = reading.get("pm25", None) if isinstance(reading, dict) else None
-    if pm25_val:
-        info_s = aqi_info(pm25_val)  # ← Add this
-        st.markdown(f'''
-            <div style="background:#111318; border:0.5px solid #2a2d35; border-radius:8px; padding:10px; margin-bottom:8px">
-                <div style="font-size:11px; font-weight:600; color:#e8eaf0">{station["name"]}</div>
-                <div style="font-size:10px; color:#6b7280; margin-bottom:4px">{station["area"]}</div>
-                <div style="font-family:IBM Plex Mono; font-size:20px; font-weight:700; color:{info_s["color"]}">{pm25_val}</div>
-                <div style="font-size:10px; color:{info_s["color"]}">{info_s["category"]}</div>
-            </div>
-        ''', unsafe_allow_html=True)
-    else:
-        st.markdown(f'''
-            <div style="background:#111318; border:0.5px solid #2a2d35; border-radius:8px; padding:10px; margin-bottom:8px">
-                <div style="font-size:11px; font-weight:600; color:#e8eaf0">{station["name"]}</div>
-                <div style="font-size:10px; color:#6b7280">{station["area"]}</div>
-                <div style="font-size:11px; color:#374151; margin-top:4px">No recent data</div>
-            </div>
-        ''', unsafe_allow_html=True)
+                reading = station_readings.get(station["name"], {})
+                pm25_val = reading.get("pm25", None) if isinstance(reading, dict) else None
+                if pm25_val:
+                    info_s = aqi_info(pm25_val)
+                    st.markdown(f'''
+                        <div style="background:#111318; border:0.5px solid #2a2d35; border-radius:8px; padding:10px; margin-bottom:8px">
+                            <div style="font-size:11px; font-weight:600; color:#e8eaf0">{station["name"]}</div>
+                            <div style="font-size:10px; color:#6b7280; margin-bottom:4px">{station["area"]}</div>
+                            <div style="font-family:IBM Plex Mono; font-size:20px; font-weight:700; color:{info_s["color"]}">{pm25_val}</div>
+                            <div style="font-size:10px; color:{info_s["color"]}">{info_s["category"]}</div>
+                        </div>
+                    ''', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'''
+                        <div style="background:#111318; border:0.5px solid #2a2d35; border-radius:8px; padding:10px; margin-bottom:8px">
+                            <div style="font-size:11px; font-weight:600; color:#e8eaf0">{station["name"]}</div>
+                            <div style="font-size:10px; color:#6b7280">{station["area"]}</div>
+                            <div style="font-size:11px; color:#374151; margin-top:4px">No recent data</div>
+                        </div>
+                    ''', unsafe_allow_html=True)
 
     # This was likely the line causing the AttributeError (st.markdow)
     st.markdown('<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#374151;text-align:center;margin-top:20px">Interactive map uses real-time coordinates for Pan Bazaar, Railway Colony, and IITG.</div>', unsafe_allow_html=True)
