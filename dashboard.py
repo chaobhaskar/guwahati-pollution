@@ -254,62 +254,74 @@ def fetch_gee_sentinel5p():
     """Fetch Sentinel-5P NO2 & CO column data via GEE service account."""
     try:
         import ee
-        # Build credentials from Streamlit secrets or local JSON file
+
+        # ── Build credentials ─────────────────────────────────────────────
         try:
-            gee_cfg = st.secrets["gee"]
-            credentials = ee.ServiceAccountCredentials(
-                email=gee_cfg["client_email"],
-                key_data=gee_cfg["private_key"]
-            )
+            gee_cfg = dict(st.secrets["gee"])          # TOML section → dict
+            email   = gee_cfg["client_email"]
+            pk      = gee_cfg["private_key"]
         except Exception:
-            import json as _json
-            import os as _os
-            key_file = _os.path.join(_os.path.dirname(__file__), "guwahati-pollution-0f49b9347765.json")
+            # Local fallback: read JSON key file from project root
+            import json as _json, os as _os
+            key_file = _os.path.join(_os.path.dirname(__file__),
+                                     "guwahati-pollution-0f49b9347765.json")
             with open(key_file) as f:
-                key_json = _json.load(f)
-            credentials = ee.ServiceAccountCredentials(
-                email=key_json["client_email"],
-                key_data=key_json["private_key"]
+                kj = _json.load(f)
+            email = kj["client_email"]
+            pk    = kj["private_key"]
+
+        credentials = ee.ServiceAccountCredentials(email=email, key_data=pk)
+        ee.Initialize(credentials, opt_url="https://earthengine.googleapis.com")
+
+        # ── Query parameters ─────────────────────────────────────────────
+        point   = ee.Geometry.Point([91.7362, 26.1445])   # Guwahati centroid
+        now_dt  = datetime.utcnow()
+        start   = (now_dt - timedelta(days=5)).strftime("%Y-%m-%d")
+        end     = now_dt.strftime("%Y-%m-%d")
+
+        def _point_mean(collection, band):
+            """Reliable single-point extraction via reduceRegion."""
+            img = collection.mean()
+            result = img.reduceRegion(
+                reducer=ee.Reducer.mean(),
+                geometry=point,
+                scale=5500,          # Sentinel-5P native resolution ~5.5km
+                bestEffort=True
             )
-        ee.Initialize(credentials)
+            val = result.get(band).getInfo()
+            return val
 
-        point = ee.Geometry.Point([91.7362, 26.1445])  # Guwahati
-        now_dt = datetime.utcnow()
-        start = (now_dt - timedelta(days=5)).strftime("%Y-%m-%d")
-        end = now_dt.strftime("%Y-%m-%d")
-
-        # NO2 total column (mol/m²)
+        # NO2 total column density (mol/m²) → µmol/m²
         no2_col = (ee.ImageCollection("COPERNICUS/S5P/NRTI/L3_NO2")
                    .filterDate(start, end)
                    .select("NO2_column_number_density")
-                   .filterBounds(point))
+                   .filterBounds(point.buffer(10000)))
         no2_val = None
         if no2_col.size().getInfo() > 0:
-            no2_img = no2_col.mean()
-            no2_val = no2_img.sample(point, 5000).first().get("NO2_column_number_density").getInfo()
-            if no2_val:
-                no2_val = round(float(no2_val) * 1e6, 3)  # mol/m² → µmol/m²
+            raw = _point_mean(no2_col, "NO2_column_number_density")
+            if raw is not None:
+                no2_val = round(float(raw) * 1e6, 3)
 
-        # CO total column (mol/m²)
+        # CO total column density (mol/m²) → mmol/m²
         co_col = (ee.ImageCollection("COPERNICUS/S5P/NRTI/L3_CO")
                   .filterDate(start, end)
                   .select("CO_column_number_density")
-                  .filterBounds(point))
+                  .filterBounds(point.buffer(10000)))
         co_val = None
         if co_col.size().getInfo() > 0:
-            co_img = co_col.mean()
-            co_val = co_img.sample(point, 5000).first().get("CO_column_number_density").getInfo()
-            if co_val:
-                co_val = round(float(co_val) * 1000, 2)  # mol/m² → mmol/m²
+            raw = _point_mean(co_col, "CO_column_number_density")
+            if raw is not None:
+                co_val = round(float(raw) * 1000, 2)
 
         return {
             "no2_umol_m2": no2_val,
-            "co_mmol_m2": co_val,
+            "co_mmol_m2":  co_val,
             "period": f"{start} → {end}",
             "source": "ESA Sentinel-5P / Google Earth Engine",
         }
-    except Exception:
-        pass
+    except Exception as _e:
+        # Surface the error in session state so we can display it in the UI
+        st.session_state["gee_error"] = str(_e)
     return {}
 
 def fetch_station_readings():
@@ -779,7 +791,7 @@ if st.session_state.page == "home":
                 <div style="flex:1">
                     <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:4px">CAMS SATELLITE vs GROUND SENSOR</div>
                     <div style="font-size:12px;color:#c8cdd6">
-                        Ground sensor: <span style="color:#f5a623;font-weight:600">{current_pm25} µg/m³</span> &nbsp;·&nbsp;
+                        Ground sensor: <span style="color:#f5a623;font-weight:600">{round(float(current_pm25), 1):.1f} µg/m³</span> &nbsp;·&nbsp;
                         Satellite (CAMS): <span style="color:#60a5fa;font-weight:600">{sat["pm25_satellite"]} µg/m³</span> &nbsp;·&nbsp;
                         Difference: <span style="color:{diff_color};font-weight:600">{"+"+str(diff) if diff>0 else str(diff)} µg/m³</span>
                     </div>
@@ -832,6 +844,7 @@ if st.session_state.page == "home":
                     CO (carbon monoxide) indicates incomplete combustion events like crop burning.
                 </div>
                 <div style="margin-top:8px;font-size:9px;color:#374151">Period: {gee_period} · {gee_src}</div>
+                {f'<div style="margin-top:6px;font-size:8px;color:#ef4444;font-family:IBM Plex Mono,monospace">⚠ GEE error: {st.session_state.get("gee_error","")}</div>' if st.session_state.get("gee_error") else ""}
             </div>''', unsafe_allow_html=True)
 
         # Satellite PM2.5 trend chart
