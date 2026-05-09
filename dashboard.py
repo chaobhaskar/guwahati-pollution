@@ -213,6 +213,105 @@ def fetch_sentinel5p():
         pass
     return {}
 
+# ── WAQI (World Air Quality Index) ─────────────────────────────────────────
+@st.cache_data(ttl=1800)
+def fetch_waqi():
+    """Fetch live PM2.5 from WAQI for Guwahati — secondary validation source."""
+    try:
+        token = "ff4bb338b29159ee8d7999d4f0f86f9ea0a3b8cf"
+        try:
+            token = st.secrets.get("WAQI_TOKEN", token)
+        except:
+            pass
+        r = requests.get(
+            f"https://api.waqi.info/feed/guwahati/?token={token}",
+            timeout=10
+        )
+        if r.status_code == 200:
+            data = r.json()
+            if data.get("status") == "ok":
+                d = data["data"]
+                pm25 = d.get("iaqi", {}).get("pm25", {}).get("v")
+                pm10 = d.get("iaqi", {}).get("pm10", {}).get("v")
+                aqi_w = d.get("aqi")
+                time_str = d.get("time", {}).get("s", "")[:16]
+                station_name = d.get("city", {}).get("name", "Guwahati")
+                return {
+                    "pm25": round(float(pm25), 1) if pm25 else None,
+                    "pm10": round(float(pm10), 1) if pm10 else None,
+                    "aqi": int(aqi_w) if aqi_w else None,
+                    "station": station_name,
+                    "time": time_str,
+                    "source": "WAQI / US EPA",
+                }
+    except Exception:
+        pass
+    return {}
+
+# ── Google Earth Engine — Sentinel-5P ───────────────────────────────────────
+@st.cache_data(ttl=3600)
+def fetch_gee_sentinel5p():
+    """Fetch Sentinel-5P NO2 & CO column data via GEE service account."""
+    try:
+        import ee
+        # Build credentials from Streamlit secrets or local JSON file
+        try:
+            gee_cfg = st.secrets["gee"]
+            credentials = ee.ServiceAccountCredentials(
+                email=gee_cfg["client_email"],
+                key_data=gee_cfg["private_key"]
+            )
+        except Exception:
+            import json as _json
+            import os as _os
+            key_file = _os.path.join(_os.path.dirname(__file__), "guwahati-pollution-0f49b9347765.json")
+            with open(key_file) as f:
+                key_json = _json.load(f)
+            credentials = ee.ServiceAccountCredentials(
+                email=key_json["client_email"],
+                key_data=key_json["private_key"]
+            )
+        ee.Initialize(credentials)
+
+        point = ee.Geometry.Point([91.7362, 26.1445])  # Guwahati
+        now_dt = datetime.utcnow()
+        start = (now_dt - timedelta(days=5)).strftime("%Y-%m-%d")
+        end = now_dt.strftime("%Y-%m-%d")
+
+        # NO2 total column (mol/m²)
+        no2_col = (ee.ImageCollection("COPERNICUS/S5P/NRTI/L3_NO2")
+                   .filterDate(start, end)
+                   .select("NO2_column_number_density")
+                   .filterBounds(point))
+        no2_val = None
+        if no2_col.size().getInfo() > 0:
+            no2_img = no2_col.mean()
+            no2_val = no2_img.sample(point, 5000).first().get("NO2_column_number_density").getInfo()
+            if no2_val:
+                no2_val = round(float(no2_val) * 1e6, 3)  # mol/m² → µmol/m²
+
+        # CO total column (mol/m²)
+        co_col = (ee.ImageCollection("COPERNICUS/S5P/NRTI/L3_CO")
+                  .filterDate(start, end)
+                  .select("CO_column_number_density")
+                  .filterBounds(point))
+        co_val = None
+        if co_col.size().getInfo() > 0:
+            co_img = co_col.mean()
+            co_val = co_img.sample(point, 5000).first().get("CO_column_number_density").getInfo()
+            if co_val:
+                co_val = round(float(co_val) * 1000, 2)  # mol/m² → mmol/m²
+
+        return {
+            "no2_umol_m2": no2_val,
+            "co_mmol_m2": co_val,
+            "period": f"{start} → {end}",
+            "source": "ESA Sentinel-5P / Google Earth Engine",
+        }
+    except Exception:
+        pass
+    return {}
+
 def fetch_station_readings():
     readings = {}
     try:
@@ -401,6 +500,34 @@ if st.session_state.page == "home":
             <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:{info['color']}">{info['category'].upper()} · HEALTH ADVICE</div>
             <div style="font-size:12px;color:#9ca3af;margin-top:3px">{health_advice(info['category'])}</div>
         </div>""", unsafe_allow_html=True)
+
+        # ── WAQI secondary validation card ──
+        waqi = fetch_waqi()
+        if waqi and waqi.get("pm25"):
+            w_info = aqi_info(waqi["pm25"])
+            w_diff = round(waqi["pm25"] - current_pm25, 1)
+            w_diff_color = "#22c55e" if abs(w_diff) < 10 else "#f5a623" if abs(w_diff) < 25 else "#ef4444"
+            w_sign = "+" if w_diff > 0 else ""
+            st.markdown(f"""
+            <div style="background:#111318;border:0.5px solid #2a2d35;border-radius:10px;padding:12px 14px;margin-top:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6b7280;letter-spacing:.08em">WAQI VALIDATION</div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#374151">US EPA · {waqi.get('time','')}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:{w_info['color']}">{waqi['pm25']}</div>
+                    <div>
+                        <div style="font-size:10px;color:#6b7280">PM2.5 µg/m³ · AQI {waqi.get('aqi','—')}</div>
+                        <div style="font-size:10px;color:{w_diff_color};margin-top:2px">{w_sign}{w_diff} µg/m³ vs CPCB sensor</div>
+                    </div>
+                </div>
+                <div style="font-size:9px;color:#374151;margin-top:6px">📡 {waqi.get('station','Guwahati')} · {waqi.get('source','WAQI')}</div>
+            </div>""", unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="background:#111318;border:0.5px dashed #2a2d35;border-radius:10px;padding:10px 14px;margin-top:8px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#374151">WAQI — connecting...</div>
+            </div>""", unsafe_allow_html=True)
 
     with g3:
         st.markdown('<div class="section-label">24-Hour PM2.5 Forecast</div>', unsafe_allow_html=True)
@@ -624,7 +751,10 @@ if st.session_state.page == "home":
 
     # ── Section 5b: Satellite Data ──
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-label">Satellite & Atmospheric Data — CAMS/Copernicus</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Satellite &amp; Atmospheric Data — CAMS/Copernicus · Sentinel-5P (GEE)</div>', unsafe_allow_html=True)
+
+    # Fetch GEE Sentinel-5P data (cached 1h, graceful fallback)
+    gee = fetch_gee_sentinel5p()
 
     if sat:
         sa1,sa2,sa3,sa4,sa5,sa6 = st.columns(6)
@@ -647,7 +777,7 @@ if st.session_state.page == "home":
             st.markdown(f'''<div style="background:#111318;border:0.5px solid #2a2d35;border-radius:8px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:16px">
                 <div style="font-size:20px">🛰</div>
                 <div style="flex:1">
-                    <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:4px">SATELLITE vs GROUND SENSOR COMPARISON</div>
+                    <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:#6b7280;margin-bottom:4px">CAMS SATELLITE vs GROUND SENSOR</div>
                     <div style="font-size:12px;color:#c8cdd6">
                         Ground sensor: <span style="color:#f5a623;font-weight:600">{current_pm25} µg/m³</span> &nbsp;·&nbsp;
                         Satellite (CAMS): <span style="color:#60a5fa;font-weight:600">{sat["pm25_satellite"]} µg/m³</span> &nbsp;·&nbsp;
@@ -655,6 +785,53 @@ if st.session_state.page == "home":
                     </div>
                     <div style="font-size:10px;color:#6b7280;margin-top:4px">Source: {sat.get("source","CAMS")} · Satellite data has ~5km resolution and 1-day latency</div>
                 </div>
+            </div>''', unsafe_allow_html=True)
+
+        # ── GEE Sentinel-5P panel ──
+        st.markdown('<div style="margin-top:14px"></div>', unsafe_allow_html=True)
+        gee_no2  = gee.get("no2_umol_m2")
+        gee_co   = gee.get("co_mmol_m2")
+        gee_period = gee.get("period", "N/A")
+        gee_src  = gee.get("source", "ESA Sentinel-5P / Google Earth Engine")
+
+        # NO2 severity label
+        if gee_no2:
+            if gee_no2 < 50:   no2_label, no2_color = "Clean",    "#22c55e"
+            elif gee_no2 < 100: no2_label, no2_color = "Moderate", "#f5a623"
+            else:               no2_label, no2_color = "Elevated", "#ef4444"
+        else:
+            no2_label, no2_color = "N/A", "#374151"
+
+        gee_no2_display = f"{gee_no2}" if gee_no2 else "—"
+        gee_co_display  = f"{gee_co}"  if gee_co  else "—"
+
+        gcol1, gcol2, gcol3 = st.columns([1, 1, 2])
+        with gcol1:
+            st.markdown(f'''
+            <div style="background:#0d1520;border:0.5px solid #1e3a4a;border-radius:10px;padding:14px;text-align:center">
+                <div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#6b7280;margin-bottom:6px;letter-spacing:.08em">S5P · NO₂ COLUMN</div>
+                <div style="font-family:IBM Plex Mono,monospace;font-size:26px;font-weight:700;color:{no2_color}">{gee_no2_display}</div>
+                <div style="font-size:9px;color:#6b7280;margin-top:2px">µmol/m² · 5-day avg</div>
+                <div style="font-size:9px;color:{no2_color};margin-top:4px;font-weight:600">{no2_label}</div>
+            </div>''', unsafe_allow_html=True)
+        with gcol2:
+            st.markdown(f'''
+            <div style="background:#0d1520;border:0.5px solid #1e3a4a;border-radius:10px;padding:14px;text-align:center">
+                <div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#6b7280;margin-bottom:6px;letter-spacing:.08em">S5P · CO COLUMN</div>
+                <div style="font-family:IBM Plex Mono,monospace;font-size:26px;font-weight:700;color:#c084fc">{gee_co_display}</div>
+                <div style="font-size:9px;color:#6b7280;margin-top:2px">mmol/m² · 5-day avg</div>
+                <div style="font-size:9px;color:#6b7280;margin-top:4px">Carbon monoxide</div>
+            </div>''', unsafe_allow_html=True)
+        with gcol3:
+            st.markdown(f'''
+            <div style="background:#0d1520;border:0.5px solid #1e3a4a;border-radius:10px;padding:14px">
+                <div style="font-family:IBM Plex Mono,monospace;font-size:9px;color:#6b7280;margin-bottom:8px;letter-spacing:.08em">🛰 GOOGLE EARTH ENGINE · SENTINEL-5P</div>
+                <div style="font-size:11px;color:#c8cdd6;line-height:1.7">
+                    ESA Copernicus Sentinel-5P satellite measures tropospheric gas columns at <strong>5.5km resolution</strong> with daily global coverage.
+                    NO₂ (nitrogen dioxide) is a proxy for combustion activity — traffic, industry, brick kilns.
+                    CO (carbon monoxide) indicates incomplete combustion events like crop burning.
+                </div>
+                <div style="margin-top:8px;font-size:9px;color:#374151">Period: {gee_period} · {gee_src}</div>
             </div>''', unsafe_allow_html=True)
 
         # Satellite PM2.5 trend chart
@@ -861,6 +1038,9 @@ elif st.session_state.page == "transparency":
         ("Secondary sensor","Pan Bazaar CAAQMS, Guwahati (CPCB)"),
         ("Weather data","Open-Meteo — free, hourly, 5-day forecast"),
         ("AQI standard","India CPCB (Central Pollution Control Board)"),
+        ("WAQI validation","World Air Quality Index (WAQI) — US EPA standard, live PM2.5 cross-check"),
+        ("Satellite (CAMS)","Copernicus Atmosphere Monitoring Service via Open-Meteo — PM2.5, NO2, O3, AOD, UV"),
+        ("Satellite (GEE)","ESA Sentinel-5P via Google Earth Engine — NO₂ & CO tropospheric columns, 5.5km res"),
         ("Model","Dual Attention Bidirectional LSTM v3"),
         ("Features","45 engineered + Fourier decomposition"),
         ("Imputation","Random Forest iterative imputation"),

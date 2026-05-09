@@ -4,3 +4,7 @@ models/
 .DS_Store
 dashboard copy.py
 dashboard_backup.py
+!models/metrics.json
+!data/raw/*.csv
+.streamlit/secrets.toml
+guwahati-pollution-0f49b9347765.json
